@@ -12,9 +12,8 @@ opts="-S 1 -B \"$alg1\" -B \"$alg2\" -R AVG"
 
 if [ $# -eq 0 ]; then
 java weka.classifiers.meta.Vote
-echo "Usage: weka.j48.sh <file.arff>"
+echo "Usage: weka.Vote.sh <file.arff>"
 else
 data=$1
-#java weka.classifiers.meta.Vote -t $data $opts
 java weka.classifiers.meta.Vote -t $data -S 1 -B "$alg1" -B "$alg2" -R AVG
 fi
