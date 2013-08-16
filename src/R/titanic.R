@@ -44,9 +44,9 @@ preprocess <- function(df.orig) {
     df$Gender <- sapply(df.orig$Sex, function(x) {if(x=="male") return(1) else return(0)})
 
     # put Fare in bins
-    #df$Fare <- df.orig$Fare
-    df$Fare.1 <- sapply(df.orig$Fare, function(x) {if(x<100) return(1) else return(0)})
-    df$Fare.2 <- sapply(df.orig$Fare, function(x) {if(x>=100) return(1) else return(0)})
+    df$Fare <- df.orig$Fare
+#    df$Fare.1 <- sapply(df.orig$Fare, function(x) {if(x<100) return(1) else return(0)})
+#    df$Fare.2 <- sapply(df.orig$Fare, function(x) {if(x>=100) return(1) else return(0)})
     #df$Fare.3 <- sapply(df.orig$Fare, function(x) {if(x>100) return(1) else return(0)})
 
     # convert Embarked attribute into binary form
