@@ -1,0 +1,43 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+    echo -e "Usage: run_weka_alg <data.arff>"
+    exit 1
+fi
+model=$1
+rfile=`cat $model | sed "s/arff/csv/g"`
+mkdir -p log
+
+# run R SVM algorithms
+#echo -e "\n===> run svm.R"
+#./src/R/svm.R $model > log/svm.R.log
+#cat log/svm.R.log | egrep "Correctly|Kappa"
+
+# run all weka algorithms
+for alg in "NaiveBayes" "j48" "RandomForest" "BFTree" "SMO" "Vote"
+do
+    echo -e "\n===> run weka.$alg.sh"
+    ./src/Weka/weka.$alg.sh $model > log/$alg.log
+    cat log/$alg.log | egrep "Correctly|Kappa"
+done
+
+#echo -e "\n===> run weka.SMO.sh w/ kernel1"
+#./src/Weka/weka.SMO.sh $model 1 > log/smo1.log
+#cat log/smo1.log | egrep "Correctly|Kappa"
+
+#echo -e "\n===> run weka.SMO.sh w/ kernel2"
+#./src/Weka/weka.SMO.sh $model 2 > log/smo2.log
+#cat log/smo2.log | egrep "Correctly|Kappa"
+
+#echo -e "\n===> run weka.SMO.sh w/ kernel3"
+#./src/Weka/weka.SMO.sh $model 3 > log/smo3.log
+#cat log/smo3.log | egrep "Correctly|Kappa"
+
+#echo -e "\n===> run weka.SMO.sh w/ kernel4"
+#./src/Weka/weka.SMO.sh $model 4 > log/smo4.log
+#cat log/smo4.log | egrep "Correctly|Kappa"
+
+#echo -e "\n===> run weka.SMO.sh w/ kernel5"
+#./src/Weka/weka.SMO.sh $model 5 > log/smo5.log
+#cat log/smo5.log | egrep "Correctly|Kappa"
+
