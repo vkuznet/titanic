@@ -3,3 +3,10 @@
 
 # Example code in package build process
 *-Ex.R
+
+# back-up files
+*.un~
+*.*~
+
+# python files
+*.pyc
