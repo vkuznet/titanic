@@ -18,3 +18,5 @@ the steps we need:
    - it will also print on stdout Correctly identified results and kappa
      statistics for traninig set nad cross-validation steps
 
+Refernces:
+1) Stacking Multiple Classifiers, http://www.youtube.com/watch?v=Nje8mblA7bs
