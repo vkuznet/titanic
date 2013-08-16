@@ -28,6 +28,53 @@ data <- read.csv(paste0(my.path, file.name), header=T)
 # always set a seed
 set.seed(12345)
 
+# set Age threshold to divide Adults and Children
+age.thr <- 10
+
+adjust.age <- function(x) {
+    # tweak NAs of Age attribute as following:
+    # parch is number of parents/children abroad
+    # sibsp is number of sibglings/spouses abroad
+    # if parch > 2 it means this is adult
+    # if sibsp > 1 it means this is a child
+    # if sibsp=parch=0 and pclass=1, it means it was adult
+    # if Name has Mrs, it meas married woman
+    # if Name has Misss, it meas un-married woman, so we'll assign it kids age
+    # if Name has Mr., we'll assign it as adult man
+    adult.age <- mean(x$Age, na.rm=T)
+    kid.age <- age.thr-1
+    for(i in 1:nrow(x)) {
+        row <- x[i,]
+        if (is.na(row$Age) & row$Parch>2) {
+            row$Age <- adult.age
+        }
+        else if(is.na(row$Age) & row$SibSp>1) {
+            row$Age <- kid.age
+        }
+        else if(is.na(row$Age) & !row$SibSp & !row$Parch) {
+            row$Age <- adult.age
+        }
+        else if(is.na(row$Age) & grepl("Mrs", row$Name)) {
+            row$Age <- adult.age
+        }
+        else if(is.na(row$Age) & grepl("Miss", row$Name)) {
+            row$Age <- adult.age
+        }
+        else if(is.na(row$Age) & grepl("Mr.", row$Name)) {
+            row$Age <- adult.age
+        }
+        x[i,] <- row
+    }
+    return(x)
+}
+
+# Cross-check how we adjusted the Age
+#print(sprintf("# of missing Age: %d", nrow(subset(data, is.na(data$Age)))))
+#data <- adjust.age(data)
+#print(sprintf("After correction, # of missing Age: %d", nrow(subset(data, is.na(data$Age)))))
+#ddd<-subset(data[,c("Pclass", "Age", "SibSp", "Parch", "Ticket", "Name")], is.na(data$Age))
+#print(ddd)
+
 preprocess <- function(df.orig) {
 
     # Take all numeric attributes from original df and put it into new dataframe
@@ -40,24 +87,26 @@ preprocess <- function(df.orig) {
     df$Class.1 <- sapply(df.orig$Pclass, function(x) {if(x==1) return(1) else return(0)})
     df$Class.2 <- sapply(df.orig$Pclass, function(x) {if(x==2) return(1) else return(0)})
     df$Class.3 <- sapply(df.orig$Pclass, function(x) {if(x==3) return(1) else return(0)})
+
     # convert Gender Male to 1, Female to 0
     df$Gender <- sapply(df.orig$Sex, function(x) {if(x=="male") return(1) else return(0)})
 
     # put Fare in bins
-    df$Fare <- df.orig$Fare
+#    df$Fare <- df.orig$Fare
+    df$Fare <- scale(df.orig$Fare)
 #    df$Fare.1 <- sapply(df.orig$Fare, function(x) {if(x<100) return(1) else return(0)})
 #    df$Fare.2 <- sapply(df.orig$Fare, function(x) {if(x>=100) return(1) else return(0)})
     #df$Fare.3 <- sapply(df.orig$Fare, function(x) {if(x>100) return(1) else return(0)})
 
     # convert Embarked attribute into binary form
 
-    #df$Embarked <- sapply(df.orig$Embarked,
-    #function(x) {
-    #    if(x=="C") return(1)
-    #    else if(x=="Q") return(2)
-    #    else if(x=="S") return(3)
-    #    else return(0)
-    #})
+#    df$Embarked <- sapply(df.orig$Embarked,
+#    function(x) {
+#        if(x=="C") return(1)
+#        else if(x=="Q") return(2)
+#        else if(x=="S") return(3)
+#        else return(0)
+#    })
 
     df$Embarked.C <- sapply(df.orig$Embarked, function(x) {if(x=="C") return(1) else return(0)})
     df$Embarked.Q <- sapply(df.orig$Embarked, function(x) {if(x=="Q") return(1) else return(0)})
@@ -69,12 +118,7 @@ preprocess <- function(df.orig) {
     # 2: Unknown
     #df$Age.category <- sapply(df.orig$Age, function(x) {if(is.na(x)) return(2) else if(x>12) return(1) else return(0)})
 
-    # trick to drop columne
-    #drops <- c("Age")
-    #df <- df[,!names(df) %in% drops]
-
     # binary age categories
-    age.thr <- 8
     df$Child <- sapply(df.orig$Age, function(x) {if(!is.na(x) & x<age.thr) return(1) else return(0)})
     #df$Adult <- sapply(df.orig$Age, function(x) {if(is.na(x) | x>=age.thr) return(1) else return(0)})
     df$Adult <- sapply(df.orig$Age, function(x) {if(!is.na(x) & x>=age.thr) return(1) else return(0)})
@@ -114,8 +158,8 @@ preprocess <- function(df.orig) {
     colnames(cor.matrix) <- names(df)[idx:ncol(df)]
     rownames(cor.matrix) <- names(df)[idx:ncol(df)]
     correlations <- as.numeric(cor.matrix)
-    cat("====== Correlations ======\n")
-    print(cor.matrix)
+    #cat("====== Correlations ======\n")
+    #print(cor.matrix)
 
     # round to 2 digits correlation matrix and plot it
     fig.name <- paste0("cor", ext)
