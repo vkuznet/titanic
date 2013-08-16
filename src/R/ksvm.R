@@ -1,14 +1,18 @@
+#!/usr/bin/env Rscript
+# clean-up session parameters
+rm(list=ls())
+
 # load data
 my.path <- paste0(getwd(), "/")
 file.name <- "model.csv"
 df <- read.csv(paste0(my.path, file.name), header=T)
-print(head(df))
+#print(head(df))
 
 # SVM library
 library(kernlab)
 
 # set seed
-set.seed(12345)
+set.seed(1)
 
 # split data into train/test datasets
 index <- 1:nrow(df)
