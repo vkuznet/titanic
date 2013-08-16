@@ -1,0 +1,25 @@
+# Big Header
+
+## Section Header
+
+Some text goes here
+
+```r
+# load data
+my.path <- paste0(getwd(), "/")
+# example
+file.name <- 'train.csv'
+df <- read.csv(paste0(my.path, file.name), header=TRUE)
+```
+
+Example of some list:
+
+1. we need to load train data
+2. we need to test on test data
+
+Example of embedded plot:
+
+<div id="container">
+    <img class=center src=images/cor.png />
+Fig 1. Correlation matrix
+</div>
