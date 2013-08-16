@@ -4,10 +4,10 @@ export CLASSPATH=/Applications/weka-3-6-9.app/Contents/Resources/Java/weka.jar
 data=./model.arff
 seed=1
 kernel1="weka.classifiers.functions.supportVector.PolyKernel -C 250007 -E 1.0"
-kernel2="weka.classifiers.functions.supportVector.PolyKernel -C 250007 -E 2.0"
-kernel3="weka.classifiers.functions.supportVector.PolyKernel -C 250007 -E 4.0"
-kernel4="weka.classifiers.functions.supportVector.RBFKernel -C 250007 -G 0.01"
-kernel5="weka.classifiers.functions.supportVector.RBFKernel -C 250007 -G 1.0"
+kernel2="weka.classifiers.functions.supportVector.RBFKernel -C 250007 -G 1.0"
+#kernel3="weka.classifiers.functions.supportVector.PolyKernel -C 250007 -E 2.0"
+#kernel4="weka.classifiers.functions.supportVector.PolyKernel -C 250007 -E 4.0"
+#kernel5="weka.classifiers.functions.supportVector.RBFKernel -C 250007 -G 0.01"
 # -V The number of folds for the internal cross-validation. (default -1, usre
 # training data)
 opts="-C 1.0 -L 0.001 -N 0 -V 10 -W 1"
@@ -16,11 +16,6 @@ cmd="java weka.classifiers.functions.SMO"
 if [ $# -eq 0 ]; then
 java weka.classifiers.functions.SMO
 echo "Usage: weka.SMO.sh <file.arff> <kernel-id>"
-echo "kernel-id=1, is PolyKernel -E 1"
-echo "kernel-id=2, is PolyKernel -E 2"
-echo "kernel-id=3, is PolyKernel -E 4"
-echo "kernel-id=4, is RBFKernel -G 0.01"
-echo "kernel-id=5, is RBFKernel -G 1"
 else
 data=$1
 if [ $# -eq 2 ]; then
