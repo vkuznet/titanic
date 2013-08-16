@@ -1,0 +1,49 @@
+This file contains description of our base model. Please see log area for outputs
+of different ML algorithms.
+
+The model based on the following set of attributes:
+
+  SibSp Parch Class.1 Class.2 Class.3 Gender    Fare Embarked.C Embarked.Q Embarked.S Child Adult Age.NA Survived
+1     1     0       0       0       1      1  7.2500          0          0          1     0     1      0        0
+2     1     0       1       0       0      0 71.2833          1          0          0     0     1      0        1
+3     0     0       0       0       1      0  7.9250          0          0          1     0     1      0        1
+4     1     0       1       0       0      0 53.1000          0          0          1     0     1      0        1
+5     0     0       0       0       1      1  8.0500          0          0          1     0     1      0        0
+6     0     0       0       0       1      1  8.4583          0          1          0     0     0      1        0
+
+and we achieved the following performance:
+
+===> run svm.R
+Loading required package: utils
+Loading required package: class
+[1] "Correctly classified: 0.723906, kappa 0.423738"
+
+===> run weka.j48.sh
+Correctly Classified Instances         731               82.0426 %
+Kappa statistic                          0.6105
+Correctly Classified Instances         715               80.2469 %
+Kappa statistic                          0.5626
+
+===> run weka.RandomForest.sh
+Correctly Classified Instances         824               92.4804 %
+Kappa statistic                          0.8377
+Correctly Classified Instances         700               78.5634 %
+Kappa statistic                          0.5363
+
+===> run weka.BFTree.sh
+Correctly Classified Instances         787               88.3277 %
+Kappa statistic                          0.7471
+Correctly Classified Instances         714               80.1347 %
+Kappa statistic                          0.5619
+
+===> run weka.SMO.sh w/ kernel1
+Correctly Classified Instances         701               78.6756 %
+Kappa statistic                          0.5421
+Correctly Classified Instances         700               78.5634 %
+Kappa statistic                          0.5405
+
+===> run weka.SMO.sh w/ kernel2
+Correctly Classified Instances         735               82.4916 %
+Kappa statistic                          0.6064
+Correctly Classified Instances         721               80.9203 %
+Kappa statistic                          0.5691

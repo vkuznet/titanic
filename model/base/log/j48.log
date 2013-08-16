@@ -1,0 +1,65 @@
+
+Options: -C 0.25 -M 2 
+
+J48 pruned tree
+------------------
+
+Gender <= 0
+|   Class.3 <= 0: 1 (170.0/9.0)
+|   Class.3 > 0
+|   |   Fare <= 23.25: 1 (117.0/48.0)
+|   |   Fare > 23.25: 0 (27.0/3.0)
+Gender > 0
+|   Parch <= 0: 0 (484.0/80.0)
+|   Parch > 0
+|   |   Child <= 0: 0 (79.0/20.0)
+|   |   Child > 0
+|   |   |   SibSp <= 2: 1 (9.0)
+|   |   |   SibSp > 2: 0 (5.0)
+
+Number of Leaves  : 	7
+
+Size of the tree : 	13
+
+
+Time taken to build model: 0.4 seconds
+Time taken to test model on training data: 0.03 seconds
+
+=== Error on training data ===
+
+Correctly Classified Instances         731               82.0426 %
+Incorrectly Classified Instances       160               17.9574 %
+Kappa statistic                          0.6105
+Mean absolute error                      0.2721
+Root mean squared error                  0.3688
+Relative absolute error                 57.5132 %
+Root relative squared error             75.8423 %
+Total Number of Instances              891     
+
+
+=== Confusion Matrix ===
+
+   a   b   <-- classified as
+ 492  57 |   a = 0
+ 103 239 |   b = 1
+
+
+
+=== Stratified cross-validation ===
+
+Correctly Classified Instances         715               80.2469 %
+Incorrectly Classified Instances       176               19.7531 %
+Kappa statistic                          0.5626
+Mean absolute error                      0.2745
+Root mean squared error                  0.3855
+Relative absolute error                 58.0172 %
+Root relative squared error             79.2702 %
+Total Number of Instances              891     
+
+
+=== Confusion Matrix ===
+
+   a   b   <-- classified as
+ 502  47 |   a = 0
+ 129 213 |   b = 1
+

@@ -1,0 +1,16 @@
+
+Call:
+svm(formula = Survived ~ ., data = trainset, type = type, cross = cross, kernel = k, gamma = gamma, degree = degree)
+
+
+Parameters:
+   SVM-Type:  C-classification 
+ SVM-Kernel:  polynomial 
+       cost:  1 
+     degree:  3 
+      gamma:  1 
+     coef.0:  0 
+
+Number of Support Vectors:  225
+
+[1] "Correctly classified: 0.723906, kappa 0.423738"

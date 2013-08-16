@@ -1,0 +1,74 @@
+
+Options: -C 1.0 -L 0.001 -N 0 -V 10 -W 1 -K "weka.classifiers.functions.supportVector.PolyKernel -C 250007 -E 1.0" 
+
+SMO
+
+Kernel used:
+  Linear Kernel: K(x,y) = <x,y>
+
+Classifier for classes: 0, 1
+
+BinarySMO
+
+Machine linear: showing attribute weights, not support vectors.
+
+        -0.2203 * (normalized) SibSp
+ +      -0.0395 * (normalized) Parch
+ +       0.0023 * (normalized) Class.1
+ +       0.0015 * (normalized) Class.2
+ +      -0.0038 * (normalized) Class.3
+ +      -2.0067 * (normalized) Gender
+ +       0.1788 * (normalized) Fare
+ +       0.0022 * (normalized) Embarked.C
+ +       0.0022 * (normalized) Embarked.Q
+ +      -0.0044 * (normalized) Embarked.S
+ +       0.0976 * (normalized) Child
+ +      -0.0457 * (normalized) Adult
+ +      -0.0519 * (normalized) Age.NA
+ +       1.0517
+
+Number of kernel evaluations: 205367 (93.762% cached)
+
+
+
+Time taken to build model: 0.55 seconds
+Time taken to test model on training data: 0.05 seconds
+
+=== Error on training data ===
+
+Correctly Classified Instances         701               78.6756 %
+Incorrectly Classified Instances       190               21.3244 %
+Kappa statistic                          0.5421
+Mean absolute error                      0.2132
+Root mean squared error                  0.4618
+Relative absolute error                 45.0762 %
+Root relative squared error             94.9547 %
+Total Number of Instances              891     
+
+
+=== Confusion Matrix ===
+
+   a   b   <-- classified as
+ 468  81 |   a = 0
+ 109 233 |   b = 1
+
+
+
+=== Stratified cross-validation ===
+
+Correctly Classified Instances         700               78.5634 %
+Incorrectly Classified Instances       191               21.4366 %
+Kappa statistic                          0.5405
+Mean absolute error                      0.2144
+Root mean squared error                  0.463 
+Relative absolute error                 45.3125 %
+Root relative squared error             95.2036 %
+Total Number of Instances              891     
+
+
+=== Confusion Matrix ===
+
+   a   b   <-- classified as
+ 466  83 |   a = 0
+ 108 234 |   b = 1
+
