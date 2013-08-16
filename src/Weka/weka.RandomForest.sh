@@ -6,7 +6,7 @@ seed=1
 opts="-I 10 -K 0 -S 1"
 
 if [ $# -eq 0 ]; then
-java weka.classifiers.trees.RandomForest -I 10 -K 0 -S 1
+java weka.classifiers.trees.RandomForest
 echo "Usage: weka.RandomForest.sh <file.arff>"
 else
 java weka.classifiers.trees.RandomForest -t $data $opts
