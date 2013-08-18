@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+
+# for references:
+# http://weka.wikispaces.com/Making+predictions
+
+if [ $# -eq 0 ]; then
+    echo "Usage: run_weka <help|model|prediction>"
+    exit 1
+fi
+
+if [ "$1" == "help" ]; then
+    model="RandomForest" # default ML
+    action="model"
+elif [ $# -eq 1 ]; then
+    model=$1
+    action="model"
+elif [ $# -eq 2 ]; then
+    model=$1
+    action="prediction"
+fi
+
+# set path to Weka
+export CLASSPATH=/Applications/weka-3-6-9.app/Contents/Resources/Java/weka.jar
+#export CLASSPATH=/Applications/weka-3-7-10-apple-jvm.app/Contents/Resources/Java/weka.jar
+
+# read WEKA_MODEL environment for ML model choice, e.g. RandomForest, AdaBoostM1, etc.
+#model=${WEKA_MODEL:=RandomForest}
+
+# Instructions: to include new model clone elif section and add your weka
+# command along with its options. Add your model to the models variable below
+
+models="RandomForest, AdaBoostM1, BFTree, NaiveBayes, SMO, J48, Vote"
+
+# ML models and their options, feel free to add new model or modify existing one
+if [ "$model" == "RandomForest" ]; then
+    wcmd="weka.classifiers.trees.$model"
+    opts="-I 50 -K 0 -S 1"
+elif [ "$model" == "AdaBoostM1" ]; then
+    wcmd="weka.classifiers.meta.AdaBoostM1"
+    opts="-P 100 -S 1 -I 10 -W weka.classifiers.trees.RandomForest -- -I 10 -K 0 -S 1"
+elif [ "$model" == "BFTree" ]; then
+    wcmd="weka.classifiers.trees.BFTree"
+    opts="-S 1 -M 2 -N 5 -C 1.0 -P POSTPRUNED"
+elif [ "$model" == "NaiveBayes" ]; then
+    wcmd="weka.classifiers.bayes.NaiveBayes"
+    opts=""
+elif [ "$model" == "SMO" ]; then
+    kernel="weka.classifiers.functions.supportVector.RBFKernel -C 250007 -G 1.0"
+    wcmd="weka.classifiers.functions.SMO"
+    opts="-C 1.0 -L 0.001 -N 0 -V 10 -W 1"
+elif [ "$model" == "J48" ]; then
+    opts="-C 0.25 -M 2"
+    wcmd="weka.classifiers.trees.J48"
+elif [ "$model" == "Vote" ]; then
+    kernel="weka.classifiers.functions.supportVector.PolyKernel -C 250007 -E 1.0"
+    alg1="weka.classifiers.functions.SMO -C 1.0 -L 0.0010 -P 1.0E-12 -N 0 -V -1 -W 1 -K \"$kernel\""
+    alg2="weka.classifiers.trees.RandomForest -I 10 -K 0 -S 1"
+    opts="-S 1"
+    wcmd="weka.classifiers.meta.Vote"
+else
+    echo "$model is not implemented"
+    echo "Please use one of the following models: $models"
+    exit 1
+fi
+
+# DO NOT MODIFY BELOW THIS LINE
+
+# input parameters for ML
+idir=$PWD
+odir=$idir/log
+seed=1
+data=$PWD/model.arff
+tdata=$PWD/test.arff
+
+# files to be used
+mfile=$odir/$model.model
+tfile=$idir/data/test.csv
+pfile=$odir/prediction.txt
+
+if [ "$action" == "help" ]; then
+    java $wcmd
+    exit 0
+fi
+
+if [ "$action" == "model" ] || [ "$action" == "prediction" ]; then
+    if  [ "$model" == "SMO" ]; then
+        java $wcmd -i -t $data -d $mfile $opts -K "$kernel"
+        exe="CLASSPATH=$CLASSPATH java $wcmd -i -t $data -d $mfile $opts -K\"$kernel\""
+    elif  [ "$model" == "Vote" ]; then
+        java $wcmd -i -t $data -d $mfile $opts -B "$alg1" -B "$alg2" -R AVG
+        exe="CLASSPATH=$CLASSPATH java $wcmd -i -t $data -d $mfile $opts -B \"$alg1\" -B \"$alg2\" -R AVG"
+    else
+        java $wcmd -i -t $data -d $mfile $opts
+        exe="CLASSPATH=$CLASSPATH java $wcmd -i -t $data -d $mfile $opts"
+    fi
+    echo "Model     : $model"
+    echo "Command   : $exe"
+fi
+# run prediction part if it is requested
+if  [ "$action" == "prediction" ]; then
+    java $wcmd -T $tdata -l $mfile -p 1 > $pfile.tmp
+
+    echo "PassengerId,Survived" > $pfile
+    cat $pfile.tmp | \
+        grep "?" | awk '{print ""$5" "$3""}' | \
+        sed -e "s,(,,g" -e "s,),,g" -e "s,1:,," -e "s,2:,,g" -e "s, ,\,," >> $pfile
+    echo "Model file: $mfile"
+    echo "Results   : $pfile"
+fi
