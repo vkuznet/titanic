@@ -18,5 +18,12 @@ the steps we need:
    - it will also print on stdout Correctly identified results and kappa
      statistics for traninig set nad cross-validation steps
 
+- Two perform modeling and/or prediction run **bin/run_weka <model|prediction>**
+
+   - it will invoke given Weka algorithm, e.g. RandomForest, and
+     will store results into the log area
+   - it will also print on stdout full model statistics and create final file
+     for kaggle submission.
+
 Refernces:
 1) Stacking Multiple Classifiers, http://www.youtube.com/watch?v=Nje8mblA7bs
