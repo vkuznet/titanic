@@ -72,6 +72,8 @@ seed=1
 data=$PWD/model.arff
 tdata=$PWD/test.arff
 
+mkdir -p $odir
+
 # files to be used
 mfile=$odir/$model.model
 tfile=$idir/data/test.csv
