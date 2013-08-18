@@ -31,7 +31,7 @@ if [ $# -eq 0 ]; then
     echo "Usage: weka.$model.sh <prediction|model|help>"
 else
 if [ "$1" == "prediction" ]; then
-    java $weka_model -t $data -d $mfile $opts
+    java $weka_model -i -t $data -d $mfile $opts
     java $weka_model -T $tdata -l $mfile -p 1 > $pfile.tmp
     echo "PassengerId,Survived" > $pfile
     cat $pfile.tmp | \
@@ -41,7 +41,7 @@ if [ "$1" == "prediction" ]; then
     echo "Model  : $mfile"
     echo "Results: $pfile"
 elif [ "$1" == "model" ]; then
-    java $weka_model -t $data $opts
+    java $weka_model -i -t $data $opts
 else
     java $weka_model
 fi
