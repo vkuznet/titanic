@@ -158,3 +158,14 @@ roc <- function(fit, df, fname) {
     plot(perf.lift)
     dev.off()
 }
+
+# helper function to write out model prediction into CSV file (kaggle format)
+write.prediction <- function(model, testdata, fname="prediction.csv") {
+    out <- predict(model, testdata)
+    d <- data.frame(PassengerId=testdata$PassengerId)
+    o <- sapply(out, function(x) {if(is.na(x)) return(0) else as.integer(x)-1})
+    d <- cbind(d, Survived=o)
+    write.csv(d, fname)
+    cmd <- sprintf("cat %s | sed -e \"s,\\\",,g\" | awk '{z=split($0,a,\",\"); print \"\"a[2]\",\"a[3]\"\"}' > %s.tmp; mv %s.tmp %s", fname, fname, fname, fname)
+    system(cmd)
+}
