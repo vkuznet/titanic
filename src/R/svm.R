@@ -12,9 +12,9 @@ file.name <- "model.csv"
 df <- read.csv(paste0(my.path, file.name), header=T)
 
 # exclude id columne to work with ML
-train.df <- df[2:ncol(df)]
-# during training we use the same dataset, but exclude classification var (last one)
-test.df <- train.df[2:ncol(train.df)-1]
+train.df <- drop(df, c("id", "PassengerId"))
+# during training we use the same dataset, but exclude classification var
+test.df <- drop(df, c("id", "PassengerId", "Survived"))
 
 # this is an example on how to split data into train/test datasets
 #index <- 1:nrow(df)
@@ -30,12 +30,12 @@ type <- sprintf('C-classification')
 cross <- 10
 
 # run svm algorithm (e1071 library) for given vector of data and kernel
-model <- svm(as.factor(Survived)~., data=train.df,
+svm.model <- svm(as.factor(Survived)~., data=train.df,
              type=type, cross=cross, kernel=k, gamma=gamma, degree=degree)
-print(model)
+print(svm.model)
 
 # the last column of this dataset is what we'll predict, so we'll exclude it
-svm.pred <- predict(model, test.df)
+svm.pred <- predict(svm.model, test.df)
 
 # print confugtion matrix
 conf.matrix(train.df$Survived, svm.pred)
