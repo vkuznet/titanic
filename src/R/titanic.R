@@ -5,10 +5,6 @@ rm(list=ls())
 # set Age threshold to divide Adults and Children
 age.thr <- 10
 
-# use PDF for high-quality plots, while png for rmd
-#ext <- ".pdf"
-ext <- ".png"
-
 # load helper functions, libraries, set seeds, etc.
 source("src/R/helper.R")
 
@@ -69,7 +65,7 @@ adjust.data <- function(x, debug=F) {
 preprocess <- function(df.orig, survived=T) {
 
     # Take all numeric attributes from original df and put it into new dataframe
-    df <- data.frame(id=df.orig$PassengerId,
+    df <- data.frame(PassengerId=df.orig$PassengerId,
                      SibSp=df.orig$SibSp,
                      Parch=df.orig$Parch)
 
@@ -151,10 +147,8 @@ test.df <- preprocess(test.data, survived=F)
 make.cor.plot(df)
 
 # drop some attribute before writing
-#drops <- c("Age", "Class")
-drops <- c("Class")
-df <- df[,!names(df) %in% drops]
-test.df <- test.df[,!names(test.df) %in% drops]
+df <- drop(df, c("Class"))
+test.df <- drop(test.df, c("Class"))
 
 # write data out for SVM
 write.csv(df, file="model.csv")
@@ -169,3 +163,7 @@ system(cmd)
 write.arff(test.df, file="test.arff")
 cmd="cat test.arff  | sed -e \"s/Survived string/Survived {0,1}/g\" -e \"s/'//g\" > t.arff; mv -f t.arff test.arff"
 system(cmd)
+
+# Run R ML algorithms
+source("src/R/ksvm.R")
+source("src/R/rf.R")
