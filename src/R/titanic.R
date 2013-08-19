@@ -69,6 +69,8 @@ preprocess <- function(df.orig, survived=T) {
                      SibSp=df.orig$SibSp,
                      Parch=df.orig$Parch)
 
+    df$CabinId <- sapply(df.orig$Cabin, function(x) {as.integer(x)})
+    df$TicketId <- sapply(df.orig$Ticket, function(x) {as.integer(x)})
     # convert Age into binary form of three categoris:
     # 0: Child, age < 12
     # 1: Adult
@@ -83,7 +85,7 @@ preprocess <- function(df.orig, survived=T) {
 #    df$Age.NA <- sapply(df.orig$Age, function(x) {if(is.na(x)) return(1) else return(0)})
 
     # Conver class into binary
-    #df$Class <- df.orig$Pclass
+#    df$Pclass <- df.orig$Pclass
     df$Class.1 <- sapply(df.orig$Pclass, function(x) {if(x==1) return(1) else return(0)})
     df$Class.2 <- sapply(df.orig$Pclass, function(x) {if(x==2) return(1) else return(0)})
     df$Class.3 <- sapply(df.orig$Pclass, function(x) {if(x==3) return(1) else return(0)})
@@ -108,10 +110,10 @@ preprocess <- function(df.orig, survived=T) {
 #        else return(0)
 #    })
 
-    df$Embarked.C <- sapply(df.orig$Embarked, function(x) {if(x=="C") return(1) else return(0)})
-    df$Embarked.Q <- sapply(df.orig$Embarked, function(x) {if(x=="Q") return(1) else return(0)})
-    df$Embarked.S <- sapply(df.orig$Embarked, function(x) {if(x=="S") return(1) else return(0)})
-    df$Embarked.NA <- sapply(df.orig$Embarked, function(x) {if(x=="") return(1) else return(0)})
+#    df$Embarked.C <- sapply(df.orig$Embarked, function(x) {if(x=="C") return(1) else return(0)})
+#    df$Embarked.Q <- sapply(df.orig$Embarked, function(x) {if(x=="Q") return(1) else return(0)})
+#    df$Embarked.S <- sapply(df.orig$Embarked, function(x) {if(x=="S") return(1) else return(0)})
+#    df$Embarked.NA <- sapply(df.orig$Embarked, function(x) {if(x=="") return(1) else return(0)})
 
     # add classifier as last column
     if (survived==T) {
@@ -142,13 +144,21 @@ print(sprintf("After correction: # of missing Age: %d", nrow(subset(test.data, i
 # prepare data for ML algorithms
 df <- preprocess(train.data)
 # prepare test.data for ML, we do not write survived attribute
-test.df <- preprocess(test.data, survived=F)
+real.test.df <- preprocess(test.data, survived=F)
+test.df <- real.test.df # working copy
+
+# drop Survived attribute from real test dataset
+real.test.df <- drop(test.df, c("Survived"))
 
 make.cor.plot(df)
 
 # drop some attribute before writing
-df <- drop(df, c("Class"))
-test.df <- drop(test.df, c("Class"))
+#df <- drop(df, c("Class"))
+#test.df <- drop(test.df, c("Class"))
+
+# make two subset datasets
+sdf <- subset(df, df$Survived==1)
+ndf <- subset(df, df$Survived==0)
 
 # write data out for SVM
 write.csv(df, file="model.csv")
@@ -165,5 +175,5 @@ cmd="cat test.arff  | sed -e \"s/Survived string/Survived {0,1}/g\" -e \"s/'//g\
 system(cmd)
 
 # Run R ML algorithms
-#source("src/R/ksvm.R")
-#source("src/R/rf.R")
+source("src/R/ksvm.R")
+source("src/R/rf.R")
