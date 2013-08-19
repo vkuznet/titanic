@@ -25,6 +25,8 @@ the steps we need:
    - it will also print on stdout full model statistics and create final file
      for kaggle submission.
 
-Refernces:
+References:
+-----------
+
 1. Stacking Multiple Classifiers, http://www.youtube.com/watch?v=Nje8mblA7bs
 2. Ensemble in R, http://vikparuchuri.com/blog/intro-to-ensemble-learning-in-r/
