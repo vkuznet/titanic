@@ -6,7 +6,6 @@ rm(list=ls())
 my.path <- paste0(getwd(), "/")
 file.name <- "model.csv"
 df <- read.csv(paste0(my.path, file.name), header=T)
-#print(head(df))
 
 # SVM library
 library(kernlab)
@@ -14,12 +13,16 @@ library(kernlab)
 # set seed
 set.seed(1)
 
-# split data into train/test datasets
-index <- 1:nrow(df)
-# get testindex using sample
-testindex <- sample(index, trunc(length(index)/3))
-testset <- df[testindex,]
-trainset <- df[-testindex,]
+# exclude id columne to work with ML
+train.df <- df[2:ncol(df)]
+# during training we use the same dataset, but exclude classification var (last one)
+test.df <- train.df[2:ncol(train.df)-1]
+
+# this is an example on how to split data into train/test datasets
+#index <- 1:nrow(df)
+#testindex <- sample(index, trunc(length(index)/3))
+#testset <- df[testindex,]
+#trainset <- df[-testindex,]
 
 ###### kernels
 
@@ -37,12 +40,14 @@ cross <- 10
 cost <- 1
 
 # run svm algorithm
-model <- ksvm(Survived~., data=trainset, type=type, cross=cross, kernel=k, C=cost)
+model <- ksvm(Survived~., data=train.df, type=type, cross=cross, kernel=k, C=cost)
 print(model)
+
 # the last column of this dataset is what we'll predict, so we'll exclude it
-prediction <- predict(model, testset[,-ncol(testset)])
-# the last column is what we'll check against for
-tab <- table(pred = prediction, true = testset[,ncol(testset)])
+ksvm.pred <- predict(model, test.df)
+
+# build confusion matrix
+tab <- table(observed = train.df$Survived, predicted = ksvm.pred)
 cls <- classAgreement(tab)
 msg <- sprintf("Correctly classified: %f, kappa %f", cls$diag, cls$kappa)
 print(msg)
