@@ -2,16 +2,13 @@
 # clean-up session parameters
 #rm(list=ls())
 
+# load libraries, helper functions, set seed.
+source("src/R/helper.R")
+
 # load data
 my.path <- paste0(getwd(), "/")
 file.name <- "model.csv"
-load.data <- read.csv(paste0(my.path, file.name), header=TRUE)
-
-# set seed
-set.seed(1)
-
-library(randomForest)
-library(e1071) # for classAgreement
+df <- read.csv(paste0(my.path, file.name), header=T)
 
 # exclude id columne to work with ML
 train.df <- df[2:ncol(df)]
@@ -23,12 +20,11 @@ test.df <- train.df[2:ncol(train.df)-1]
 rf <- randomForest(as.factor(Survived) ~ ., data=train.df, importance=T, proximity=T)
 rf.pred <- predict(rf, test.df)
 
-# build confusion matrix
-tab <- table(observed = train.df$Survived, predicted = rf.pred)
-cls <- classAgreement(tab)
-print(tab)
-msg <- sprintf("Correctly classified: %f, kappa %f", cls$diag, cls$kappa)
-print(msg)
+# convert rf.pred into integers
+rf.pred <- sapply(rf.pred, function(x) {as.integer(as.character(x))})
+
+# print confugtion matrix
+conf.matrix(train.df$Survived, rf.pred)
 
 # make RF plots
 fig.name <- paste0("rf1", ext)
@@ -56,3 +52,4 @@ print(imp)
 #}
 #par(op)
 #dev.off()
+
