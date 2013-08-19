@@ -26,4 +26,5 @@ the steps we need:
      for kaggle submission.
 
 Refernces:
-1) Stacking Multiple Classifiers, http://www.youtube.com/watch?v=Nje8mblA7bs
+1. Stacking Multiple Classifiers, http://www.youtube.com/watch?v=Nje8mblA7bs
+2. Ensemble in R, http://vikparuchuri.com/blog/intro-to-ensemble-learning-in-r/
