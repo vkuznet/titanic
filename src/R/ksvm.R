@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # clean-up session parameters
-rm(list=ls())
+#rm(list=ls())
 
 # load libraries, helper functions, set seed.
 source("src/R/helper.R")
