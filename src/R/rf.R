@@ -11,17 +11,14 @@ file.name <- "model.csv"
 df <- read.csv(paste0(my.path, file.name), header=T)
 
 # exclude id columne to work with ML
-train.df <- df[2:ncol(df)]
-# during training we use the same dataset, but exclude classification var (last one)
-test.df <- train.df[2:ncol(train.df)-1]
+train.df <- drop(df, c("id", "PassengerId"))
+# during training we use the same dataset, but exclude classification var
+test.df <- drop(df, c("id", "PassengerId", "Survived"))
 
 # run RandomForest, make sure that the variable used for classification is a
 # factor. For prediction use the same dataset but exclude classification var.
-rf <- randomForest(as.factor(Survived) ~ ., data=train.df, importance=T, proximity=T)
-rf.pred <- predict(rf, test.df)
-
-# convert rf.pred into integers
-rf.pred <- sapply(rf.pred, function(x) {as.integer(as.character(x))})
+rf.model <- randomForest(as.factor(Survived) ~ ., data=train.df, importance=T, proximity=T)
+rf.pred <- predict(rf.model, test.df)
 
 # print confugtion matrix
 conf.matrix(train.df$Survived, rf.pred)
@@ -30,16 +27,16 @@ conf.matrix(train.df$Survived, rf.pred)
 fig.name <- paste0("rf1", ext)
 start.plot(fig.name)
 par(mfrow=c(1,1))
-plot(rf)
+plot(rf.model)
 dev.off()
 fig.name <- paste0("rf2", ext)
 start.plot(fig.name)
 par(mfrow=c(1,2))
-varImpPlot(rf)
+varImpPlot(rf.model)
 dev.off()
 
 # print important variables used in RF
-imp <- importance(rf)
+imp <- importance(rf.model)
 print(imp)
 
 #fig.name <- paste0("partial_rf", ext)
