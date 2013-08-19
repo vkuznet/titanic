@@ -11,7 +11,7 @@ source("src/R/helper.R")
 # load data
 my.path <- paste0(getwd(), "/data/")
 file.name <- "train.csv"
-data <- read.csv(paste0(my.path, file.name), header=T)
+train.data <- read.csv(paste0(my.path, file.name), header=T)
 file.name <- "test.csv"
 test.data <- read.csv(paste0(my.path, file.name), header=T)
 
@@ -127,11 +127,11 @@ preprocess <- function(df.orig, survived=T) {
 # Perform data adjustments, make some plots and write out our data for ML algorithms
 
 print(sprintf("Fix Age attribute of train data"))
-print(sprintf("Prior correction: # of missing Age: %d", nrow(subset(data, is.na(data$Age)))))
-data <- adjust.data(data)
-print(sprintf("After correction: # of missing Age: %d", nrow(subset(data, is.na(data$Age)))))
+print(sprintf("Prior correction: # of missing Age: %d", nrow(subset(train.data, is.na(train.data$Age)))))
+train.data <- adjust.data(train.data)
+print(sprintf("After correction: # of missing Age: %d", nrow(subset(train.data, is.na(train.data$Age)))))
 # make some plots for our data
-make.plots(data)
+make.plots(train.data)
 
 # Fix Age attribute of test data
 print(sprintf("Fix Age attribute"))
@@ -140,7 +140,7 @@ test.data <- adjust.data(test.data)
 print(sprintf("After correction: # of missing Age: %d", nrow(subset(test.data, is.na(test.data$Age)))))
 
 # prepare data for ML algorithms
-df <- preprocess(data)
+df <- preprocess(train.data)
 # prepare test.data for ML, we do not write survived attribute
 test.df <- preprocess(test.data, survived=F)
 
@@ -165,5 +165,5 @@ cmd="cat test.arff  | sed -e \"s/Survived string/Survived {0,1}/g\" -e \"s/'//g\
 system(cmd)
 
 # Run R ML algorithms
-source("src/R/ksvm.R")
-source("src/R/rf.R")
+#source("src/R/ksvm.R")
+#source("src/R/rf.R")
