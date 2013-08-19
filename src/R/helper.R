@@ -8,7 +8,11 @@ library(e1071)
 library(kernlab)
 
 # set seed
-set.seed(1)
+set.seed(12345)
+
+# use PDF for high-quality plots, while png for rmd
+#ext <- ".pdf"
+ext <- ".png"
 
 # helper function to initialize plotting function depending on file extention
 start.plot <- function(f) {
@@ -18,6 +22,11 @@ start.plot <- function(f) {
         pdf(f)
     else if (grepl("jpg$", f))
         jpeg(f)
+}
+
+# helper function to drop columns from given dataset
+drop <- function(df, drops) {
+    return(df[,!names(df) %in% drops])
 }
 
 # make plots for various attributes of given dataframe
@@ -101,13 +110,51 @@ make.cor.plot <- function (df) {
     cat("====== Correlations ======\n")
     print(cor)
 }
+
+# helper function to calculate error of predicion
+pred.error <- function(obs, pred) {
+    error <- sqrt((sum((obs-pred)^2))/length(obs))
+    print(sprintf("Prediction error: %f", error))
+}
+
+# convert predicition vector into vector of ints
+int.pred <- function(p) {
+    # convert pred into integers
+    pred <- sapply(p, function(x) {as.integer(as.character(x))})
+    return(pred)
+}
+
 # Helper fuction to build and print confution matrix for given observeraion and
 # prediction variables
 conf.matrix <- function(obs, pred) {
+    pred <- int.pred(pred)
     # build confusion matrix
     tab <- table(observed = obs, predicted = pred)
     cls <- classAgreement(tab)
     print(tab)
     msg <- sprintf("Correctly classified: %f, kappa %f", cls$diag, cls$kappa)
     print(msg)
+    pred.error(obs, pred)
+}
+
+roc <- function(fit, df, fname) {
+    pr <- predict(fit, newdata=df, type="prob")[,2]
+    pred <- prediction(pr, df$Survived)
+
+    # get performance data for various parameters, e.g. sensitivity, etc.
+    perf.ss <- performance(pred, "sens", "spec")
+    perf.roc <- performance(pred, "tpr", "fpr")
+    perf.lift <- performance(pred, "lift", "rpp")
+    perf.pp <- performance(pred, "prec", "rec")
+    perf.auc <- performance(pred, "auc")
+
+    # make final plot of performance data
+    fig.name <- paste0(fname, ext)
+    start.plot(fig.name)
+    par(mfrow=c(2,2))
+    plot(perf.roc)
+    plot(perf.ss)
+    plot(perf.pp)
+    plot(perf.lift)
+    dev.off()
 }
