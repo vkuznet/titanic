@@ -20,6 +20,9 @@ test.df <- drop(df, c("id", "PassengerId", "Survived"))
 rf.model <- randomForest(as.factor(Survived) ~ ., data=train.df, importance=T, proximity=T)
 rf.pred <- predict(rf.model, test.df)
 
+# write out prediction
+write.prediction(rf.model, real.test.df, "rf_prediction.csv")
+
 # print confugtion matrix
 conf.matrix(train.df$Survived, rf.pred)
 
