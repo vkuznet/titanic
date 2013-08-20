@@ -24,9 +24,43 @@ start.plot <- function(f) {
         jpeg(f)
 }
 
+# helper functino to reset plot layout
+graph.reset <- function() {
+    par(mfrow=c(1,1))
+    dev.off()
+}
+
 # helper function to drop columns from given dataset
 drop <- function(df, drops) {
     return(df[,!names(df) %in% drops])
+}
+
+# helper function to assign Cabin category
+cabin.category <- function(x) {
+    llist <- LETTERS
+    cat <- 0
+    for(i in 1:length(llist)) {
+        pat <- sprintf("^%s" , llist[i])
+        if (grepl(pat, x)) {
+            return(i)
+        }
+    }
+    return(cat)
+}
+
+# helper function to re-assign cabin based on ticket info
+assign.cabin <- function(x) {
+    d <- x[with(x, order(-TicketId, -CabinCat)), ]
+    tid <- -1
+    for(i in 1:nrow(d)) {
+        if (tid == d[i,]$TicketId) { # tickets are the same
+            d[i,]$CabinCat <- d[i-1,]$CabinCat
+        } else {
+            tid <- d[i,]$TicketId
+        }
+    }
+    d <- d[with(d, order(PassengerId)),]
+    return (d)
 }
 
 # make plots for various attributes of given dataframe
@@ -178,8 +212,10 @@ write.prediction <- function(model, testdata, fname="prediction.csv") {
 # d1=cut1(train.data)
 # d2=cut2(train.data, d1)
 cut1 <- function(x) {
-    d <- subset(x, (x$Age<18 & x$Pclass<3) | (x$Sex=="female" & x$Pclass<3) |
-                    x$Embarked=="" | as.integer(x$Cabin)!=1)
+#    d <- subset(x, (x$Age<18 & x$Pclass<3) | (x$Sex=="female" & x$Pclass<3) |
+#                    x$Embarked=="" | as.integer(x$Cabin)!=1)
+    d <- subset(x, (x$Age<18 & x$Pclass<3) | x$Sex=="female" |
+                    x$Embarked=="" | as.integer(x$Cabin)!=1 )
     return(d)
 }
 cut2 <- function(x, c1) {
@@ -244,6 +280,20 @@ run.svm <- function(x) {
     print(svm.model)
     return(svm.model)
 }
+
+# helper function to print out misclassified rows for given dataset and
+# prediction
+print.misses <- function(x, p) {
+    cat("### misses\n")
+    mdf <- data.frame()
+    for(i in 1:nrow(x)) {
+        if(x[i,]$Survived != int.pred(p[i])) {
+            mdf <- rbind(mdf, x[i,])
+        }
+    }
+    print(mdf)
+}
+
 cut.proc <- function(x, real.test=NULL, fname="rf") {
     d1 <- cut1(x)
     d2 <- cut2(x, d1)
@@ -259,7 +309,9 @@ cut.proc <- function(x, real.test=NULL, fname="rf") {
     f1 <- run.rf(d1)
     f2 <- run.rf(d2)
     pred1 <- predict(f1, test.d1)
+    print.misses(d1, pred1)
     pred2 <- predict(f2, test.d2)
+    print.misses(d2, pred2)
     cat("\n### Fit dataset1 ###\n")
     conf.matrix(d1$Survived, pred1)
 #    imp1 <- importance(f1)
@@ -278,11 +330,6 @@ cut.proc <- function(x, real.test=NULL, fname="rf") {
         test2 <- drop(test2, c("id", "Survived"))
         fname1 <- paste0(fname, "1.csv")
         fname2 <- paste0(fname, "2.csv")
-#        min.cid <- min(test2$CabinId)
-#        max.cid <- max(test2$CabinId)
-#        if (min.cid==max.cid & min.cid == 1) { # it is constant
-#            test2$CabinId[1] = 2 # introduce fake value to allow SVM to run
-#        }
         write.prediction(f1, test1, fname1)
         write.prediction(f2, test2, fname2)
         cmd <- sprintf("cat %s %s | sort -n -u > %s_double.csv", fname1, fname2, fname)
