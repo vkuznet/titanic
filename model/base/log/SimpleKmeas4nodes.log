@@ -1,0 +1,39 @@
+
+kMeans
+======
+
+Number of iterations: 4
+Within cluster sum of squared errors: 1043.9988893217132
+Missing values globally replaced with mean/mode
+
+Cluster centroids:
+                          Cluster#
+Attribute     Full Data          0          1          2          3
+                  (891)      (117)       (75)      (282)      (417)
+===================================================================
+SibSp             0.523     0.8803     0.3333     0.4965     0.4748
+Parch            0.3816     0.3077       0.28     0.5319     0.3189
+Class.1          0.2424     0.1709          0     0.5496     0.0983
+Class.2          0.2065     0.0684     0.0267     0.2979     0.2158
+Class.3          0.5511     0.7607     0.9733     0.1525     0.6859
+Gender           0.6476     0.8462     0.4267     0.2908     0.8729
+Fare            32.2042     22.863    11.3421    61.3972    18.8353
+Embarked.C       0.1886     0.2051       0.16     0.3617     0.0719
+Embarked.Q       0.0864          0     0.8133     0.0071     0.0336
+Embarked.S       0.7228     0.7949     0.0267     0.6241     0.8945
+Child            0.0269     0.0684     0.0933     0.0319          0
+Adult            0.7744          0     0.1467     0.9291          1
+Age.NA           0.1987     0.9316       0.76      0.039          0
+Survived              0          0          1          1          0
+
+
+
+
+=== Clustering stats for training data ===
+
+Clustered Instances
+0      117 ( 13%)
+1       75 (  8%)
+2      282 ( 32%)
+3      417 ( 47%)
+
