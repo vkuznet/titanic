@@ -70,7 +70,9 @@ preprocess <- function(df.orig, survived=T) {
                      Parch=df.orig$Parch)
 
     df$CabinId <- sapply(df.orig$Cabin, function(x) {as.integer(x)})
+#    df$CabinId <- sapply(df$Cabin, function(x) {if(x==1) return(NA) else return(x)})
     df$TicketId <- sapply(df.orig$Ticket, function(x) {as.integer(x)})
+#    df$TicketId <- sapply(df$Ticket, function(x) {if(x==1) return(NA) else return(x)})
     # convert Age into binary form of three categoris:
     # 0: Child, age < 12
     # 1: Adult
@@ -96,6 +98,7 @@ preprocess <- function(df.orig, survived=T) {
     # put Fare in bins
 #    df$Fare <- df.orig$Fare
     df$Fare <- scale(df.orig$Fare)
+#    df$Fare <- sapply(scale(df.orig$Fare), function(x) {if(is.na(x)) return(0) else return(x)})
 #    df$Fare.1 <- sapply(df.orig$Fare, function(x) {if(x<100) return(1) else return(0)})
 #    df$Fare.2 <- sapply(df.orig$Fare, function(x) {if(x>=100) return(1) else return(0)})
     #df$Fare.3 <- sapply(df.orig$Fare, function(x) {if(x>100) return(1) else return(0)})
