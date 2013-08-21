@@ -43,13 +43,13 @@ RunClusters<-function(x,NumCluster=2,printCluster=F){
   return(Cluster)
 }
 
-do.clustering <- function(tdf, clusters=seq(2:10)) {
+do.clustering <- function(tdf, nc=seq(2:10)) {
     # exclude id columne to work with ML
     train.df <- drop(tdf, c("id", "PassengerId", "Survived"))
     # create new data frame and add clusters to it
     df <- data.frame(id=seq(1:nrow(tdf)))
 
-    for(i in 6:10){
+    for(i in nc){
       cls <- RunClusters(train.df,i)
       df <- cbind(df, cls$cluster)
       df.names <- names(df)
@@ -68,7 +68,8 @@ add.cluster <- function(x, nc, survived) {
         d <- x
     }
     cls <- kmeans(x, nc)
-    d$cls <- cls$cluster
+    cname <- sprintf("cls.%i", nc)
+    d[,c(cname)] <- cls$cluster
     if (survived) {
         d$Survived <- sur
     }
