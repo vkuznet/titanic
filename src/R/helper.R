@@ -162,6 +162,7 @@ int.pred <- function(p) {
 # Helper fuction to build and print confution matrix for given observeraion and
 # prediction variables
 conf.matrix <- function(obs, pred) {
+    obs <- int.pred(obs)
     pred <- int.pred(pred)
     # build confusion matrix
     tab <- table(observed = obs, predicted = pred)
