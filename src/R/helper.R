@@ -123,6 +123,18 @@ make.plots <- function(df.orig) {
     hist(df.orig$Survived, main="Survived rate", xlab="no cuts")
     hist(subset(df.orig, (df.orig$Age<18 & df.orig$Pclass<3) | (df.orig$Sex=="female" & df.orig$Pclass<3) | df.orig$Embarked=="")$Survived, main="Survived rate", xlab="age<18&class<3|sex=F&class<3|not-embarked")
     dev.off()
+
+    # survival plots by class
+    brks <- seq(0,80,5)
+    fig.name <- paste0("survival_age", ext)
+    start.plot(fig.name)
+    par(mfrow=c(1,1))
+    p0=hist(subset(train.data, train.data$Survived==0)$Age, breaks=brks)
+    p1=hist(subset(train.data, train.data$Survived==1)$Age, breaks=brks)
+    plot(p0, col=rgb(0,0,1,1/4), xlim=c(0,80), main="Survived", xlab="blue/red non/survived")
+    plot(p1, col=rgb(1,0,0,1/4), xlim=c(0,80), add=T, main="Survived", xlab="blue/red non/survived")
+    dev.off()
+
 }
 
 # make correlation plot
