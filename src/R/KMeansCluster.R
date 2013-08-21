@@ -10,8 +10,9 @@ require(fpc)
 
 # helper function to create clusters
 RunClusters<-function(x,NumCluster=2,printCluster=F){
-  print(sprintf("Run Clustering"))
+  print(sprintf("Run Clustering with nc=%i", NumCluster))
   system("mkdir -p plots")
+  system("rm plots/*.png")
   #Run cluster
   Cluster<-kmeans(x,NumCluster)
   #print Results
@@ -42,14 +43,18 @@ RunClusters<-function(x,NumCluster=2,printCluster=F){
   return(Cluster)
 }
 
-do.clustering <- function(tdf) {
-    #set the number of cluster to run
-    nc=2
-
+do.clustering <- function(tdf, clusters=seq(2:10)) {
     # exclude id columne to work with ML
     train.df <- drop(tdf, c("id", "PassengerId", "Survived"))
+    # create new data frame and add clusters to it
+    df <- data.frame(id=seq(1:nrow(tdf)))
 
-    for(i in 2:10){
-      RunClusters(train.df,i)
+    for(i in 6:10){
+      cls <- RunClusters(train.df,i)
+      df <- cbind(df, cls$cluster)
+      df.names <- names(df)
+      df.names[length(df.names)] <- sprintf("cls.%d", i)
+      names(df) <- df.names
     }
+    return(df)
 }
