@@ -3,7 +3,8 @@
 rm(list=ls())
 
 # set Age threshold to divide Adults and Children
-age.thr <- 10
+#age.thr <- 10
+age.thr <- 18
 
 # load helper functions, libraries, set seeds, etc.
 source("src/R/helper.R")
@@ -67,12 +68,53 @@ adjust.data <- function(x, debug=F) {
         if (debug == T) {
             print(row)
         }
-        if( (row$Age<18 & row$Pclass<3) |
-            (row$Sex=="female" & row$Pclass<3) |
-             row$Embarked=="" | as.integer(row$Cabin)!=1 ) {
-            row$Cut <- 1
+#        if( (row$Age<18 & row$Pclass<3) |
+#            (row$Sex=="female" & row$Pclass<3) |
+#             row$Embarked=="" | as.integer(row$Cabin)!=1 ) {
+#            row$Cut <- 1
+#        }
+        if (row$Pclass==1) {
+            if(row$Sex=="female") {
+                if(row$Age<age.thr) {
+                    row$W <- 9
+                } else {
+                    row$W <- 10
+                }
+            } else {
+                if(row$Age<age.thr) {
+                    row$W <- 8
+                } else {
+                    row$W <- 3.5
+                }
+            }
+        } else if (row$Pclass==2) {
+            if(row$Sex=="female") {
+                if(row$Age<age.thr) {
+                    row$W <- 10
+                } else {
+                    row$W <- 8.5
+                }
+            } else {
+                if(row$Age<age.thr) {
+                    row$W <- 6
+                } else {
+                    row$W <- 2
+                }
+            }
         } else {
-            row$Cut <- 0
+            if(row$Sex=="female") {
+                if(row$Age<age.thr) {
+                    row$W <- 6
+                } else {
+                    row$W <- 4.5
+                }
+            } else {
+                if(row$Age<age.thr) {
+                    row$W <- 3
+                } else {
+                    row$W <- 2.5
+                }
+            }
         }
         # make new Married category: 1-Miss, 2-Mrs, 3-Mr, 0-otherwise
         if(grepl("Miss\\. ", row$Name)) {
@@ -98,8 +140,8 @@ preprocess <- function(df.orig, survived=T) {
     # Take all numeric attributes from original df and put it into new dataframe
     df <- data.frame(PassengerId=df.orig$PassengerId)
 
-    # Cut attribute
-#    df$Cut <- df.orig$Cut
+    # W attribute
+    df$W <- df.orig$W
 
     # Married attribute
     df$Married <- df.orig$Married
@@ -144,27 +186,29 @@ preprocess <- function(df.orig, survived=T) {
 #    df$Age.NA <- sapply(df.orig$Age, function(x) {if(is.na(x)) return(1) else return(0)})
 
     # Class attribute
-#    df$Pclass <- df.orig$Pclass
-    df$Class.1 <- sapply(df.orig$Pclass, function(x) {if(x==1) return(1) else return(0)})
-    df$Class.2 <- sapply(df.orig$Pclass, function(x) {if(x==2) return(1) else return(0)})
-    df$Class.3 <- sapply(df.orig$Pclass, function(x) {if(x==3) return(1) else return(0)})
+    df$Pclass <- df.orig$Pclass
+#    df$Class.1 <- sapply(df.orig$Pclass, function(x) {if(x==1) return(1) else return(0)})
+#    df$Class.2 <- sapply(df.orig$Pclass, function(x) {if(x==2) return(1) else return(0)})
+#    df$Class.3 <- sapply(df.orig$Pclass, function(x) {if(x==3) return(1) else return(0)})
 
     # Gender attribute, convert Gender Male to 1, Female to 0
     df$Gender <- sapply(df.orig$Sex, function(x) {if(x=="male") return(1) else return(0)})
 
     # Fare attribute, put Fare in bins
+    fare <- sapply(df.orig$Fare, function(x) {if(is.na(x)) return(50) else return(x)})
+    df$Fare <- fare
 #    df$Fare <- df.orig$Fare
 #    df$Fare <- scale(df.orig$Fare)
-    fare <- sapply(df.orig$Fare, function(x) {if(is.na(x)) return(50) else return(x)})
-    df$Fare.1 <- sapply(fare, function(x) {if(x<10) return(1) else return(0)})
-    df$Fare.2 <- sapply(fare, function(x) {if(x>=10&x<=100) return(1) else return(0)})
-    df$Fare.3 <- sapply(fare, function(x) {if(x>100) return(1) else return(0)})
+#    df$Fare.1 <- sapply(fare, function(x) {if(x<10) return(1) else return(0)})
+#    df$Fare.2 <- sapply(fare, function(x) {if(x>=10&x<=100) return(1) else return(0)})
+#    df$Fare.3 <- sapply(fare, function(x) {if(x>100) return(1) else return(0)})
 
     # Embarked attribute
-    df$Embarked.C <- sapply(df.orig$Embarked, function(x) {if(x=="C") return(1) else return(0)})
-    df$Embarked.Q <- sapply(df.orig$Embarked, function(x) {if(x=="Q") return(1) else return(0)})
-    df$Embarked.S <- sapply(df.orig$Embarked, function(x) {if(x=="S") return(1) else return(0)})
-    df$Embarked.NA <- sapply(df.orig$Embarked, function(x) {if(x=="") return(1) else return(0)})
+    df$Embarked <- sapply(df.orig$Embarked, function(x) {as.integer(x)})
+#    df$Embarked.C <- sapply(df.orig$Embarked, function(x) {if(x=="C") return(1) else return(0)})
+#    df$Embarked.Q <- sapply(df.orig$Embarked, function(x) {if(x=="Q") return(1) else return(0)})
+#    df$Embarked.S <- sapply(df.orig$Embarked, function(x) {if(x=="S") return(1) else return(0)})
+#    df$Embarked.NA <- sapply(df.orig$Embarked, function(x) {if(x=="") return(1) else return(0)})
 
     # add classifier as last column
     if (survived==T) {
@@ -236,7 +280,8 @@ do.rf(df, real.test.df)
 
 # re-run ML with additional cluster info
 #clusters <- do.clustering(df, 6:10)
-nclusters <- c(3,4,5,6,7,8,9,10)
+#nclusters <- c(3,4,5,6,7,8,9,10)
+nclusters <- c(7)
 dd <- df
 test.dd <- real.test.df
 for(nc in nclusters) {
