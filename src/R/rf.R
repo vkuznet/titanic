@@ -17,8 +17,9 @@ test.df <- drop(df, c("id", "PassengerId", "Survived"))
 
 # run RandomForest, make sure that the variable used for classification is a
 # factor. For prediction use the same dataset but exclude classification var.
-rf.model <- randomForest(as.factor(Survived) ~ ., data=train.df, importance=T, proximity=T)
+rf.model <- randomForest(Survived~., data=train.df, importance=T, proximity=T)
 rf.pred <- predict(rf.model, test.df)
+print(rf.model)
 
 # write out prediction
 write.prediction(rf.model, real.test.df, "rf_prediction.csv")
