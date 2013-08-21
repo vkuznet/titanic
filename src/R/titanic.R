@@ -77,55 +77,59 @@ adjust.data <- function(x, debug=F) {
 preprocess <- function(df.orig, survived=T) {
 
     # Take all numeric attributes from original df and put it into new dataframe
-    df <- data.frame(PassengerId=df.orig$PassengerId,
-                     SibSp=df.orig$SibSp,
-                     Parch=df.orig$Parch)
+    df <- data.frame(PassengerId=df.orig$PassengerId)
 
+    # SibSp attribute
+    df$SibSp <- df.orig$SibSp
+#    df$SibSp.0 <- sapply(df.orig$SibSp, function(x) {if(x==0) return(1) else return(0)})
+#    df$SibSp.1 <- sapply(df.orig$SibSp, function(x) {if(x==1) return(1) else return(0)})
+#    df$SibSp.2 <- sapply(df.orig$SibSp, function(x) {if(x==2) return(1) else return(0)})
+#    df$SibSp.3 <- sapply(df.orig$SibSp, function(x) {if(x==3) return(1) else return(0)})
+
+    # Parch attribute
+    df$Parch <- df.orig$Parch
+#    df$Parch.0 <- sapply(df.orig$Parch, function(x) {if(x==0) return(1) else return(0)})
+#    df$Parch.1 <- sapply(df.orig$Parch, function(x) {if(x==1) return(1) else return(0)})
+#    df$Parch.2 <- sapply(df.orig$Parch, function(x) {if(x==2) return(1) else return(0)})
+#    df$Parch.3 <- sapply(df.orig$Parch, function(x) {if(x==3) return(1) else return(0)})
+
+    # Cabin attribute
 #    df$CabinId <- sapply(df.orig$Cabin, function(x) {as.integer(x)})
     df$CabinCat <- df.orig$CabinCat
-#    df$CabinId <- sapply(df$Cabin, function(x) {if(x==1) return(NA) else return(x)})
+#    df$Cabin.0 <- sapply(df.orig$CabinCat, function(x) {if(x==0) return(1) else return(0)})
+#    df$Cabin.1 <- sapply(df.orig$CabinCat, function(x) {if(x==1) return(1) else return(0)})
+#    df$Cabin.2 <- sapply(df.orig$CabinCat, function(x) {if(x==2) return(1) else return(0)})
+#    df$Cabin.3 <- sapply(df.orig$CabinCat, function(x) {if(x==3) return(1) else return(0)})
+
+    # Ticket attribute
     df$TicketId <- sapply(df.orig$Ticket, function(x) {as.integer(x)})
 #    df$TicketId <- sapply(df$Ticket, function(x) {if(x==1) return(NA) else return(x)})
-    # convert Age into binary form of three categoris:
-    # 0: Child, age < 12
-    # 1: Adult
-    # 2: Unknown
-    #df$Age.category <- sapply(df.orig$Age, function(x) {if(is.na(x)) return(2) else if(x>12) return(1) else return(0)})
 
+    # Age attribute
     df$Age <- df.orig$Age
     # binary age categories
 #    df$Child <- sapply(df.orig$Age, function(x) {if(!is.na(x) & x<age.thr) return(1) else return(0)})
-    #df$Adult <- sapply(df.orig$Age, function(x) {if(is.na(x) | x>=age.thr) return(1) else return(0)})
 #    df$Adult <- sapply(df.orig$Age, function(x) {if(!is.na(x) & x>=age.thr) return(1) else return(0)})
 #    df$Age.NA <- sapply(df.orig$Age, function(x) {if(is.na(x)) return(1) else return(0)})
 
-    # Conver class into binary
+    # Class attribute
 #    df$Pclass <- df.orig$Pclass
     df$Class.1 <- sapply(df.orig$Pclass, function(x) {if(x==1) return(1) else return(0)})
     df$Class.2 <- sapply(df.orig$Pclass, function(x) {if(x==2) return(1) else return(0)})
     df$Class.3 <- sapply(df.orig$Pclass, function(x) {if(x==3) return(1) else return(0)})
 
-    # convert Gender Male to 1, Female to 0
+    # Gender attribute, convert Gender Male to 1, Female to 0
     df$Gender <- sapply(df.orig$Sex, function(x) {if(x=="male") return(1) else return(0)})
 
-    # put Fare in bins
+    # Fare attribute, put Fare in bins
 #    df$Fare <- df.orig$Fare
 #    df$Fare <- scale(df.orig$Fare)
-    fare <- sapply(df.orig$Fare, function(x) {if(is.na(x)) return(0) else return(x)})
+    fare <- sapply(df.orig$Fare, function(x) {if(is.na(x)) return(50) else return(x)})
     df$Fare.1 <- sapply(fare, function(x) {if(x<10) return(1) else return(0)})
     df$Fare.2 <- sapply(fare, function(x) {if(x>=10&x<=100) return(1) else return(0)})
     df$Fare.3 <- sapply(fare, function(x) {if(x>100) return(1) else return(0)})
 
-    # convert Embarked attribute into binary form
-
-#    df$Embarked <- sapply(df.orig$Embarked,
-#    function(x) {
-#        if(x=="C") return(1)
-#        else if(x=="Q") return(2)
-#        else if(x=="S") return(3)
-#        else return(0)
-#    })
-
+    # Embarked attribute
     df$Embarked.C <- sapply(df.orig$Embarked, function(x) {if(x=="C") return(1) else return(0)})
     df$Embarked.Q <- sapply(df.orig$Embarked, function(x) {if(x=="Q") return(1) else return(0)})
     df$Embarked.S <- sapply(df.orig$Embarked, function(x) {if(x=="S") return(1) else return(0)})
@@ -133,7 +137,7 @@ preprocess <- function(df.orig, survived=T) {
 
     # add classifier as last column
     if (survived==T) {
-        df$Survived <- df.orig$Survived
+        df$Survived <- as.factor(df.orig$Survived)
     } else {
         df$Survived <- rep("?", nrow(df.orig))
     }
