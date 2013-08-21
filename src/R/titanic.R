@@ -67,6 +67,13 @@ adjust.data <- function(x, debug=F) {
         if (debug == T) {
             print(row)
         }
+        if( (row$Age<18 & row$Pclass<3) |
+            (row$Sex=="female" & row$Pclass<3) |
+             row$Embarked=="" | as.integer(row$Cabin)!=1 ) {
+            row$Cut <- 1
+        } else {
+            row$Cut <- 0
+        }
         row$CabinCat <- cabin.category(row$Cabin)
         row$TicketId <- as.integer(row$Ticket)
         ndf <- rbind(ndf, row)
@@ -78,6 +85,9 @@ preprocess <- function(df.orig, survived=T) {
 
     # Take all numeric attributes from original df and put it into new dataframe
     df <- data.frame(PassengerId=df.orig$PassengerId)
+
+    # Cut attribute
+#    df$Cut <- df.orig$Cut
 
     # SibSp attribute
     df$SibSp <- df.orig$SibSp
@@ -205,3 +215,5 @@ system(cmd)
 # Run R ML algorithms
 source("src/R/ksvm.R")
 source("src/R/rf.R")
+do.ksvm(df, real.test.df)
+do.rf(df, real.test.df)
