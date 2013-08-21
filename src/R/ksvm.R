@@ -2,56 +2,51 @@
 # clean-up session parameters
 #rm(list=ls())
 
-# load libraries, helper functions, set seed.
-source("src/R/helper.R")
+do.ksvm <- function(tdf, testdata, fname="ksvm") {
+    # exclude id columne to work with ML
+    train.df <- drop(df, c("id", "PassengerId"))
+    # during training we use the same dataset, but exclude classification var
+    test.df <- drop(tdf, c("id", "PassengerId", "Survived"))
 
-# load data
-my.path <- paste0(getwd(), "/")
-file.name <- "model.csv"
-df <- read.csv(paste0(my.path, file.name), header=T)
+    # this is an example on how to split data into train/test datasets
+    #index <- 1:nrow(df)
+    #testindex <- sample(index, trunc(length(index)/3))
+    #testset <- df[testindex,]
+    #trainset <- df[-testindex,]
 
-# exclude id columne to work with ML
-train.df <- drop(df, c("id", "PassengerId"))
-# during training we use the same dataset, but exclude classification var
-test.df <- drop(df, c("id", "PassengerId", "Survived"))
+    ###### kernels
 
-# this is an example on how to split data into train/test datasets
-#index <- 1:nrow(df)
-#testindex <- sample(index, trunc(length(index)/3))
-#testset <- df[testindex,]
-#trainset <- df[-testindex,]
+    # PolyKernels
+    poly <- polydot(degree=1, scale=1, offset=0)
+    # RBF kernels
+    rbf <- rbfdot(sigma=1)
+    cost <- 1
+    # so far sigma=3 and C=3 gave 93.5%
+    #rbf <- rbfdot(sigma=3)
+    #cost <- 3
+    # caret suggested based on 25/75 split: sigma=0.0879 and C=2
+    #rbf <- rbfdot(sigma=0.0879)
+    #cost <- 2
 
-###### kernels
+    # kernel choice
+    k <- rbf
 
-# PolyKernels
-poly <- polydot(degree=1, scale=1, offset=0)
-# RBF kernels
-rbf <- rbfdot(sigma=1)
-cost <- 1
-# so far sigma=3 and C=3 gave 93.5%
-#rbf <- rbfdot(sigma=3)
-#cost <- 3
-# caret suggested based on 25/75 split: sigma=0.0879 and C=2
-#rbf <- rbfdot(sigma=0.0879)
-#cost <- 2
+    # type of classification
+    type <- sprintf("C-svc")
+    cross <- 10
 
-# kernel choice
-k <- rbf
+    # run svm algorithm
+    ksvm.model <- ksvm(Survived~., data=train.df,
+                type=type, cross=cross, kernel=k, C=cost, prob.model=T)
+    print(ksvm.model)
 
-# type of classification
-type <- sprintf("C-svc")
-cross <- 10
+    # the last column of this dataset is what we'll predict, so we'll exclude it
+    ksvm.pred <- predict(ksvm.model, test.df)
 
-# run svm algorithm
-ksvm.model <- ksvm(Survived~., data=train.df,
-            type=type, cross=cross, kernel=k, C=cost, prob.model=T)
-print(ksvm.model)
+    # write out prediction
+    pfile <- sprintf("%s_prediction.csv", fname)
+    write.prediction(ksvm.model, testdata, pfile)
 
-# the last column of this dataset is what we'll predict, so we'll exclude it
-ksvm.pred <- predict(ksvm.model, test.df)
-
-# write out prediction
-write.prediction(ksvm.model, real.test.df, "ksvm_prediction.csv")
-
-# print confugtion matrix
-conf.matrix(train.df$Survived, ksvm.pred)
+    # print confugtion matrix
+    conf.matrix(train.df$Survived, ksvm.pred)
+}
