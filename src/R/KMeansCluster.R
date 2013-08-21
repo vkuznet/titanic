@@ -58,3 +58,19 @@ do.clustering <- function(tdf, clusters=seq(2:10)) {
     }
     return(df)
 }
+
+# helper function to add cluster with given nc to given dataframe
+add.cluster <- function(x, nc, survived) {
+    if (survived) {
+        sur <- x$Survived
+        d <- drop(x, c("Survived"))
+    } else {
+        d <- x
+    }
+    cls <- kmeans(x, nc)
+    d$cls <- cls$cluster
+    if (survived) {
+        d$Survived <- sur
+    }
+    return (d)
+}
