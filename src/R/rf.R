@@ -10,7 +10,8 @@ do.rf <- function(tdf, testdata, fname="rf") {
 
     # run RandomForest, make sure that the variable used for classification is a
     # factor. For prediction use the same dataset but exclude classification var.
-    rf.model <- randomForest(Survived~., data=train.df, importance=T, proximity=T)
+    rf.model <- randomForest(Survived~., data=train.df,
+                            importance=T, proximity=T)
     rf.pred <- predict(rf.model, test.df)
     print(rf.model)
 
