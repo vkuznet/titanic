@@ -15,6 +15,7 @@ doc/*.*~
 # ignore images
 *.png
 *.pdf
+plots/*.png
 
 # ignore Apple stuff
 .DS_Store
