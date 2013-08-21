@@ -11,3 +11,7 @@ doc/*.*~
 
 # python files
 *.pyc
+
+# ignore images
+*.png
+*.pdf
