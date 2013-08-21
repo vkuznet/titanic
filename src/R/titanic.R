@@ -42,13 +42,13 @@ adjust.data <- function(x, debug=F) {
         if(row$SibSp>3) {
             row$SibSp <- 3
         }
-        if(is.na(row$Age) & grepl("Mrs", row$Name)) {
+        if(is.na(row$Age) & grepl("Mrs\\. ", row$Name)) {
             row$Age <- adult.age
         }
-        else if(is.na(row$Age) & grepl("Miss", row$Name)) {
+        else if(is.na(row$Age) & grepl("Miss\\. ", row$Name)) {
             row$Age <- kid.age
         }
-        else if(is.na(row$Age) & grepl("Mr.", row$Name)) {
+        else if(is.na(row$Age) & grepl("Mr\\. ", row$Name)) {
             row$Age <- adult.age
         }
         else if (is.na(row$Age) & row$Parch>2) {
@@ -74,6 +74,18 @@ adjust.data <- function(x, debug=F) {
         } else {
             row$Cut <- 0
         }
+        # make new Married category: 1-Miss, 2-Mrs, 3-Mr, 0-otherwise
+        if(grepl("Miss\\. ", row$Name)) {
+            row$Married <- 1
+        }
+        else if(grepl("Mrs\\. ", row$Name)) {
+            row$Married <- 2
+        }
+        else if(grepl("Mr\\. ", row$Name)) {
+            row$Married <- 3
+        } else {
+            row$Married <- 0
+        }
         row$CabinCat <- cabin.category(row$Cabin)
         row$TicketId <- as.integer(row$Ticket)
         ndf <- rbind(ndf, row)
@@ -88,6 +100,9 @@ preprocess <- function(df.orig, survived=T) {
 
     # Cut attribute
 #    df$Cut <- df.orig$Cut
+
+    # Married attribute
+    df$Married <- df.orig$Married
 
     # SibSp attribute
     df$SibSp <- df.orig$SibSp
