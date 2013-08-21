@@ -29,8 +29,8 @@ poly <- polydot(degree=1, scale=1, offset=0)
 rbf <- rbfdot(sigma=1)
 cost <- 1
 # so far sigma=3 and C=3 gave 93.5%
-rbf <- rbfdot(sigma=3)
-cost <- 3
+#rbf <- rbfdot(sigma=3)
+#cost <- 3
 # caret suggested based on 25/75 split: sigma=0.0879 and C=2
 #rbf <- rbfdot(sigma=0.0879)
 #cost <- 2
