@@ -30,7 +30,7 @@ type <- sprintf('C-classification')
 cross <- 10
 
 # run svm algorithm (e1071 library) for given vector of data and kernel
-svm.model <- svm(as.factor(Survived)~., data=train.df,
+svm.model <- svm(Survived~., data=train.df,
              type=type, cross=cross, kernel=k, gamma=gamma, degree=degree)
 print(svm.model)
 
