@@ -3,11 +3,13 @@
 #rm(list=ls())
 
 source("src/R/helper.R")
+library(doParallel)
 library(caret)
 
 set.seed(1)
 
-run.carret <- function(d) {
+run.caret <- function(d, model="rf") {
+
 x <- d
 x$Survived <- sapply(x$Survived, function(y) {as.factor(y)})
 print(str(x))
@@ -20,25 +22,37 @@ method <- c("center", "scale")
 procValues <- preProcess(trainDescr, method = method)
 trainScaled <- predict(procValues, trainDescr)
 testScaled  <- predict(procValues, testDescr)
-rbfSVM <- train(x = trainDescr, y = trainClass,
-                method = "svmRadial", preProc = method,
-                ## Length of default tuning parameter grid
-                tuneLength = 8,
-                ## Bootstrap resampling with custon performance metrics:
-                ## sensitivity, specificity and ROC curve AUC
-                trControl = trainControl(method = "repeatedcv", repeats = 5),
-                metric = "Kappa",
-                ## Pass arguments to ksvm
-                fit = FALSE)
-print(rbfSVM, printCall = FALSE)
-print(class(rbfSVM))
-print(class(rbfSVM$finalModel))
+if (model=="ksvm") {
+    # train KSVM
+    m.fit <- train(x = trainDescr, y = trainClass,
+                    method = "svmRadial", preProc = method,
+                    ## Length of default tuning parameter grid
+                    tuneLength = 8,
+                    ## Bootstrap resampling with custon performance metrics:
+                    ## sensitivity, specificity and ROC curve AUC
+                    trControl = trainControl(method = "repeatedcv", repeats = 5),
+                    metric = "Kappa",
+                    ## Pass arguments to ksvm
+                    fit = TRUE)
+} else if (model == "rf") {
+    # train RF
+    m.fit <- train(x = trainDescr, y = trainClass, method="rf", tuneLength=5,
+                    trControl = trainControl(method = "repeatedcv",
+                                             repeats=5,
+                                             verboseIter=FALSE),
+                    metrix = "Kappa")
+} else {
+    print(sprintf("Not implemented for: %s", model))
+}
+print(m.fit, printCall = FALSE)
+print(class(m.fit))
+print(class(m.fit$finalModel))
 par(mfrow=c(2,1))
-plot(rbfSVM, xTrans = function(x) log2(x))
-densityplot(rbfSVM, metric = "Kappa", pch = "|")
+plot(m.fit, xTrans = function(x) log2(x))
+densityplot(m.fit, metric = "Kappa", pch = "|")
 
-svmPred <- predict(rbfSVM, testDescr)
-cm <- confusionMatrix(svmPred, testClass)
+m.pred <- predict(m.fit, testDescr)
+cm <- confusionMatrix(m.pred, testClass)
 print(cm)
 
 }
