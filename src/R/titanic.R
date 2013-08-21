@@ -215,5 +215,7 @@ system(cmd)
 # Run R ML algorithms
 source("src/R/ksvm.R")
 source("src/R/rf.R")
+source("src/R/KMeansCluster.R")
+#do.clustering(df)
 do.ksvm(df, real.test.df)
 do.rf(df, real.test.df)
