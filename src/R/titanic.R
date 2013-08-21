@@ -231,9 +231,18 @@ system(cmd)
 source("src/R/ksvm.R")
 source("src/R/rf.R")
 source("src/R/KMeansCluster.R")
-clusters <- do.clustering(df, 6:10)
-dd <- add.cluster(df, 7, TRUE)
-test.dd <- add.cluster(real.test.df, 7, FALSE)
 do.ksvm(df, real.test.df)
 do.rf(df, real.test.df)
-do.rf(dd, test.dd)
+
+# re-run ML with additional cluster info
+#clusters <- do.clustering(df, 6:10)
+nclusters <- c(3,4,5,6,7,8,9,10)
+dd <- df
+test.dd <- real.test.df
+for(nc in nclusters) {
+    print(sprintf("####### Add cluster %i ########", nc))
+    fname <- sprintf("rf%i", nc)
+    dd <- add.cluster(dd, nc, TRUE)
+    test.dd <- add.cluster(test.dd, nc, FALSE)
+    do.rf(dd, test.dd, fname)
+}
