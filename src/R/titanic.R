@@ -107,6 +107,12 @@ preprocess <- function(df.orig, survived=T) {
 
     # Age attribute
     df$Age <- df.orig$Age
+#    df$Age <- sapply(df.orig$Age, function(x) {
+#        if(x<=20) return(0)
+#        else if(x>20&x<=40) return(1)
+#        else if(x>40&x<=60) return(2)
+#        else return(3)
+#    })
     # binary age categories
 #    df$Child <- sapply(df.orig$Age, function(x) {if(!is.na(x) & x<age.thr) return(1) else return(0)})
 #    df$Adult <- sapply(df.orig$Age, function(x) {if(!is.na(x) & x>=age.thr) return(1) else return(0)})
