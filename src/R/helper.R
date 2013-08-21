@@ -126,7 +126,8 @@ make.plots <- function(df.orig) {
 }
 
 # make correlation plot
-make.cor.plot <- function (df) {
+make.cor.plot <- function (x) {
+    df <- drop(x, c("Survived"))
     print(sprintf("Make correlation plot"))
     # make correlation matrix
     idx <- 2
@@ -141,8 +142,8 @@ make.cor.plot <- function (df) {
     cor <- round(cor.matrix, digits=2)
     corrplot(cor, method="shade", shade.col=NA, tl.col="black", tl.srt=45, addCoef.col="black", bg="transparent")
     dev.off()
-    cat("====== Correlations ======\n")
-    print(cor)
+#    cat("====== Correlations ======\n")
+#    print(cor)
 }
 
 # helper function to calculate error of predicion
