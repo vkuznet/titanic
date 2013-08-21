@@ -9,11 +9,15 @@ require(cluster)
 require(fpc)
 
 # helper function to create clusters
-RunClusters<-function(x,NumCluster=2){
+RunClusters<-function(x,NumCluster=2,printCluster=F){
+  print(sprintf("Run Clustering"))
+  system("mkdir -p plots")
   #Run cluster
   Cluster<-kmeans(x,NumCluster)
   #print Results
-  print (Cluster)
+  if (printCluster) {
+    print (Cluster)
+  }
   #Plot Clusters
   # Make Plot Clusters
   fig.name <- paste0("plots/KMeansClusterOf",NumCluster,"nodesType1", ext)
