@@ -13,5 +13,8 @@ doc/*.*~
 *.pyc
 
 # ignore images
-#*.png
-#*.pdf
+*.png
+*.pdf
+
+# ignore Apple stuff
+.DS_Store
