@@ -212,6 +212,11 @@ do.rf(train.df, real.test.df)
 #      run.caret(train.df)
 #      run.caret(train.df, "ksvm")
 source("src/R/caret.R")
+# uncomment loop below when you want to test multiple MLs via caret
+#for(m in c("rf", "svmRadial", "svmLinear", "svmPoly")) {
+#    print(sprintf("Run caret with %s", m))
+#    run.caret(train.df, m)
+#}
 
 # re-run ML with additional cluster info
 print(sprintf("Run Clustering"))
