@@ -61,6 +61,9 @@ do.clustering <- function(tdf, nc=seq(2:10)) {
 
 # helper function to add cluster with given nc to given dataframe
 add.cluster <- function(x, nc, survived) {
+    # exclude PassengerId while doing clustering, but save it for later
+    pid <- x$PassengerId
+    x <- drop(x, c("id", "PassengerId"))
     if (survived) {
         sur <- x$Survived
         d <- drop(x, c("Survived"))
@@ -73,5 +76,7 @@ add.cluster <- function(x, nc, survived) {
     if (survived) {
         d$Survived <- sur
     }
+    # put back PassengerId
+    d$PassengerId <- pid
     return (d)
 }
