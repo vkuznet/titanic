@@ -4,9 +4,9 @@
 
 do.ksvm <- function(tdf, testdata, fname="ksvm") {
     # exclude id columne to work with ML
-    train.df <- drop(df, c("id", "PassengerId"))
+    train.df <- drop(tdf, c("id", "PassengerId"))
     # during training we use the same dataset, but exclude classification var
-    test.df <- drop(tdf, c("id", "PassengerId", "Survived"))
+    test.df <- drop(train.df, c("Survived"))
 
     # this is an example on how to split data into train/test datasets
     #index <- 1:nrow(df)
