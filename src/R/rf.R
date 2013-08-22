@@ -6,12 +6,12 @@ do.rf <- function(tdf, testdata, fname="rf") {
     # exclude id columne to work with ML
     train.df <- drop(tdf, c("id", "PassengerId"))
     # during training we use the same dataset, but exclude classification var
-    test.df <- drop(tdf, c("id", "PassengerId", "Survived"))
+    test.df <- drop(train.df, c("Survived"))
 
     # run RandomForest, make sure that the variable used for classification is a
     # factor. For prediction use the same dataset but exclude classification var.
     rf.model <- randomForest(Survived~., data=train.df,
-                            importance=T, proximity=T)
+                            importance=T, proximity=F)
     rf.pred <- predict(rf.model, test.df)
     print(rf.model)
 
