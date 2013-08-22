@@ -26,28 +26,16 @@ method <- c("center", "scale")
 procValues <- preProcess(trainDescr, method = method)
 trainScaled <- predict(procValues, trainDescr)
 testScaled  <- predict(procValues, testDescr)
-if (model=="ksvm") {
-    # train KSVM
-    m.fit <- train(x = trainDescr, y = trainClass,
-                    method = "svmRadial", preProc = method,
-                    ## Length of default tuning parameter grid
-                    tuneLength = 8,
-                    ## Bootstrap resampling with custon performance metrics:
-                    ## sensitivity, specificity and ROC curve AUC
-                    trControl = trainControl(method = "repeatedcv", repeats = 5),
-                    metric = "Kappa",
-                    ## Pass arguments to ksvm
-                    fit = TRUE)
-} else if (model == "rf") {
-    # train RF
-    m.fit <- train(x = trainDescr, y = trainClass, method="rf", tuneLength=5,
-                    trControl = trainControl(method = "repeatedcv",
-                                             repeats=5,
-                                             verboseIter=FALSE),
-                    metrix = "Kappa")
-} else {
-    print(sprintf("Not implemented for: %s", model))
-}
+m.fit <- train(x = trainDescr, y = trainClass,
+                method = model, preProc = method,
+                ## Length of default tuning parameter grid
+                tuneLength = 8,
+                ## Bootstrap resampling with custon performance metrics:
+                ## sensitivity, specificity and ROC curve AUC
+                trControl = trainControl(method = "repeatedcv", repeats = 5),
+                metric = "Kappa",
+                ## Pass arguments to ksvm
+                fit = TRUE)
 print(m.fit, printCall = FALSE)
 print(class(m.fit))
 print(sprintf("Final Model"))
