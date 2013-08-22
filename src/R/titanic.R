@@ -3,8 +3,8 @@
 rm(list=ls())
 
 # set Age threshold to divide Adults and Children
-#age.thr <- 10
-age.thr <- 18
+age.thr <- 10
+#age.thr <- 18
 
 # load helper functions, libraries, set seeds, etc.
 source("src/R/helper.R")
@@ -19,206 +19,123 @@ train.data <- read.csv(paste0(my.path, file.name), header=T)
 file.name <- "test.csv"
 test.data <- read.csv(paste0(my.path, file.name), header=T)
 
+# get all tickets from both train and test sets to form unique set
+tickets.1 <- sapply(train.data$Ticket, function(x) {as.character(x)})
+tickets.2 <- sapply(test.data$Ticket, function(x) {as.character(x)})
+tickets <- unique(c(tickets.1, tickets.2))
+
+# get all cabins from both train and test sets to form unique set
+cabins.1 <- sapply(train.data$Cabin, function(x) {as.character(x)})
+cabins.2 <- sapply(test.data$Cabin, function(x) {as.character(x)})
+cabins <- unique(c(cabins.1, cabins.2))
+
 # always set a seed
 set.seed(12345)
 
+# adjust our input data
 adjust.data <- function(x, debug=F) {
-    # tweak NAs of Age attribute as following:
-    # parch is number of parents/children abroad
-    # sibsp is number of siblings/spouses abroad
-    # if parch > 2 it means this is adult
-    # if sibsp > 1 it means this is a child
-    # if sibsp=parch=0, it means it was adult
-    # if Name has Mrs, it meas married woman
-    # if Name has Miss, it meas un-married woman, so we'll assign a kid
-    # if Name has Mr., we'll assign an adult
     ndf <- data.frame()
     adult.age <- mean(x$Age, na.rm=T)
     kid.age <- age.thr-1
     for(i in 1:nrow(x)) {
         row <- x[i,]
-        if(row$Parch>3) {
-            row$Parch <- 3
-        }
-        if(row$SibSp>3) {
-            row$SibSp <- 3
-        }
-        if(is.na(row$Age) & grepl("Mrs\\. ", row$Name)) {
-            row$Age <- adult.age
-        }
-        else if(is.na(row$Age) & grepl("Miss\\. ", row$Name)) {
-            row$Age <- kid.age
-        }
-        else if(is.na(row$Age) & grepl("Mr\\. ", row$Name)) {
-            row$Age <- adult.age
-        }
-        else if (is.na(row$Age) & row$Parch>2) {
-            row$Age <- adult.age
-        }
-        else if(is.na(row$Age) & row$SibSp>1) {
-            row$Age <- kid.age
-        }
-        else if(is.na(row$Age) & !row$SibSp & !row$Parch) {
-            row$Age <- adult.age
-        }
-        else if(is.na(row$Age)){
-            row$Age <- adult.age
-#            row$Age <- kid.age
-        }
+        row$Parch <- adjust.Parch(row)
+        row$SibSp <- adjust.SibSp(row)
+        row$Age <- assign.age(row, adult.age, kid.age)
+        row$W <- assign.weigth(row, age.thr) # run after we assign age
+        row$Title <- assign.title(row)
+        row$CabinCat <- cabin.category(row$Cabin)
+        row$CabinId <- assign.cid(row$Cabin, cabins)
+        row$TicketId <- assign.tid(row$Ticket, tickets)
+        row$Fbin <- assign.fbin(row, step=10, nbins=10)
         if (debug == T) {
             print(row)
         }
-#        if( (row$Age<18 & row$Pclass<3) |
-#            (row$Sex=="female" & row$Pclass<3) |
-#             row$Embarked=="" | as.integer(row$Cabin)!=1 ) {
-#            row$Cut <- 1
-#        }
-        if (row$Pclass==1) {
-            if(row$Sex=="female") {
-                if(row$Age<age.thr) {
-                    row$W <- 9
-                } else {
-                    row$W <- 10
-                }
-            } else {
-                if(row$Age<age.thr) {
-                    row$W <- 8
-                } else {
-                    row$W <- 3.5
-                }
-            }
-        } else if (row$Pclass==2) {
-            if(row$Sex=="female") {
-                if(row$Age<age.thr) {
-                    row$W <- 10
-                } else {
-                    row$W <- 8.5
-                }
-            } else {
-                if(row$Age<age.thr) {
-                    row$W <- 6
-                } else {
-                    row$W <- 2
-                }
-            }
-        } else {
-            if(row$Sex=="female") {
-                if(row$Age<age.thr) {
-                    row$W <- 6
-                } else {
-                    row$W <- 4.5
-                }
-            } else {
-                if(row$Age<age.thr) {
-                    row$W <- 3
-                } else {
-                    row$W <- 2.5
-                }
-            }
-        }
-        # make new Married category: 1-Miss, 2-Mrs, 3-Mr, 0-otherwise
-        if(grepl("Miss\\. ", row$Name)) {
-            row$Married <- 1
-        }
-        else if(grepl("Mrs\\. ", row$Name)) {
-            row$Married <- 2
-        }
-        else if(grepl("Mr\\. ", row$Name)) {
-            row$Married <- 3
-        } else {
-            row$Married <- 0
-        }
-        row$CabinCat <- cabin.category(row$Cabin)
-        row$TicketId <- as.integer(row$Ticket)
         ndf <- rbind(ndf, row)
     }
     return(ndf)
 }
 
+# pre-process input data
 preprocess <- function(df.orig, survived=T) {
 
     # Take all numeric attributes from original df and put it into new dataframe
-    df <- data.frame(PassengerId=df.orig$PassengerId)
+    df.new <- data.frame(PassengerId=df.orig$PassengerId)
 
     # W attribute
-    df$W <- df.orig$W
+#    df.new$W <- df.orig$W
 
-    # Married attribute
-    df$Married <- df.orig$Married
+    # Title attribute
+    df.new$Title <- df.orig$Title
 
     # SibSp attribute
-    df$SibSp <- df.orig$SibSp
-#    df$SibSp.0 <- sapply(df.orig$SibSp, function(x) {if(x==0) return(1) else return(0)})
-#    df$SibSp.1 <- sapply(df.orig$SibSp, function(x) {if(x==1) return(1) else return(0)})
-#    df$SibSp.2 <- sapply(df.orig$SibSp, function(x) {if(x==2) return(1) else return(0)})
-#    df$SibSp.3 <- sapply(df.orig$SibSp, function(x) {if(x==3) return(1) else return(0)})
+    df.new$SibSp <- df.orig$SibSp
 
     # Parch attribute
-    df$Parch <- df.orig$Parch
-#    df$Parch.0 <- sapply(df.orig$Parch, function(x) {if(x==0) return(1) else return(0)})
-#    df$Parch.1 <- sapply(df.orig$Parch, function(x) {if(x==1) return(1) else return(0)})
-#    df$Parch.2 <- sapply(df.orig$Parch, function(x) {if(x==2) return(1) else return(0)})
-#    df$Parch.3 <- sapply(df.orig$Parch, function(x) {if(x==3) return(1) else return(0)})
+    df.new$Parch <- df.orig$Parch
 
     # Cabin attribute
-#    df$CabinId <- sapply(df.orig$Cabin, function(x) {as.integer(x)})
-    df$CabinCat <- df.orig$CabinCat
-#    df$Cabin.0 <- sapply(df.orig$CabinCat, function(x) {if(x==0) return(1) else return(0)})
-#    df$Cabin.1 <- sapply(df.orig$CabinCat, function(x) {if(x==1) return(1) else return(0)})
-#    df$Cabin.2 <- sapply(df.orig$CabinCat, function(x) {if(x==2) return(1) else return(0)})
-#    df$Cabin.3 <- sapply(df.orig$CabinCat, function(x) {if(x==3) return(1) else return(0)})
+#    df.new$CabinCat <- df.orig$CabinCat
+    df.new$CabinId <- df.orig$CabinId
 
     # Ticket attribute
-    df$TicketId <- sapply(df.orig$Ticket, function(x) {as.integer(x)})
-#    df$TicketId <- sapply(df$Ticket, function(x) {if(x==1) return(NA) else return(x)})
+    df.new$TicketId <- df.orig$TicketId
+#    df.new$Ticket <- df.orig$Ticket
 
     # Age attribute
-    df$Age <- df.orig$Age
-#    df$Age <- sapply(df.orig$Age, function(x) {
+    df.new$Age <- df.orig$Age
+#    df.new$Age <- sapply(df.orig$Age, function(x) {
 #        if(x<=20) return(0)
 #        else if(x>20&x<=40) return(1)
 #        else if(x>40&x<=60) return(2)
 #        else return(3)
 #    })
     # binary age categories
-#    df$Child <- sapply(df.orig$Age, function(x) {if(!is.na(x) & x<age.thr) return(1) else return(0)})
-#    df$Adult <- sapply(df.orig$Age, function(x) {if(!is.na(x) & x>=age.thr) return(1) else return(0)})
-#    df$Age.NA <- sapply(df.orig$Age, function(x) {if(is.na(x)) return(1) else return(0)})
+#    df.new$Child <- sapply(df.orig$Age, function(x) {if(!is.na(x) & x<age.thr) return(1) else return(0)})
+#    df.new$Adult <- sapply(df.orig$Age, function(x) {if(!is.na(x) & x>=age.thr) return(1) else return(0)})
+#    df.new$Age.NA <- sapply(df.orig$Age, function(x) {if(is.na(x)) return(1) else return(0)})
 
     # Class attribute
-    df$Pclass <- df.orig$Pclass
-#    df$Class.1 <- sapply(df.orig$Pclass, function(x) {if(x==1) return(1) else return(0)})
-#    df$Class.2 <- sapply(df.orig$Pclass, function(x) {if(x==2) return(1) else return(0)})
-#    df$Class.3 <- sapply(df.orig$Pclass, function(x) {if(x==3) return(1) else return(0)})
+    df.new$Pclass <- df.orig$Pclass
 
     # Gender attribute, convert Gender Male to 1, Female to 0
-    df$Gender <- sapply(df.orig$Sex, function(x) {if(x=="male") return(1) else return(0)})
+    df.new$Gender <- sapply(df.orig$Sex, function(x) {if(x=="male") return(1) else return(0)})
 
     # Fare attribute, put Fare in bins
     fare <- sapply(df.orig$Fare, function(x) {if(is.na(x)) return(50) else return(x)})
-    df$Fare <- fare
-#    df$Fare <- df.orig$Fare
-#    df$Fare <- scale(df.orig$Fare)
-#    df$Fare.1 <- sapply(fare, function(x) {if(x<10) return(1) else return(0)})
-#    df$Fare.2 <- sapply(fare, function(x) {if(x>=10&x<=100) return(1) else return(0)})
-#    df$Fare.3 <- sapply(fare, function(x) {if(x>100) return(1) else return(0)})
+    df.new$Fare <- scale(fare) # or use scale(fare)
+#    df.new$Fbin <- df.orig$Fbin
 
     # Embarked attribute
-    df$Embarked <- sapply(df.orig$Embarked, function(x) {as.integer(x)})
-#    df$Embarked.C <- sapply(df.orig$Embarked, function(x) {if(x=="C") return(1) else return(0)})
-#    df$Embarked.Q <- sapply(df.orig$Embarked, function(x) {if(x=="Q") return(1) else return(0)})
-#    df$Embarked.S <- sapply(df.orig$Embarked, function(x) {if(x=="S") return(1) else return(0)})
-#    df$Embarked.NA <- sapply(df.orig$Embarked, function(x) {if(x=="") return(1) else return(0)})
+    embarked <- sapply(df.orig$Embarked,
+        function(x) {
+            if(as.character(x)=="C") return(1)
+            else if(as.character(x)=="S") return(2)
+            else if(as.character(x)=="Q") return(3)
+            else return(3) # missing value
+        })
+    df.new$Embarked <- unlist(embarked)
 
     # add classifier as last column
     if (survived==T) {
-        df$Survived <- as.factor(df.orig$Survived)
+        df.new$Survived <- as.factor(df.orig$Survived)
     } else {
-        df$Survived <- rep("?", nrow(df.orig))
+        df.new$Survived <- rep("?", nrow(df.orig))
     }
 
+    # break down attributes into binary form
+#    attrs <- c("Title", "SibSp", "Parch", "Pclass", "Embarked", "Fbin")
+#    for(a in attrs) {
+#        df.new <- break.down(df.new, a)
+#    }
+
+    # make sure that Survived is a last column
+    sur <- df.new$Survived
+    df.new <- drop(df.new, c("Survived"))
+    df.new$Survived <- sur
+
     # return our data frame
-    return(df)
+    return(df.new)
 }
 
 # Perform data adjustments, make some plots and write out our data for ML algorithms
@@ -232,38 +149,46 @@ print(sprintf("After correction: # of missing Age: %d", nrow(subset(train.data, 
 make.plots(train.data)
 
 # Fix Age attribute of test data
-print(sprintf("Fix Age attribute"))
+print(sprintf("Fix Age attribute on test data"))
 print(sprintf("Prior correction: # of missing Age: %d", nrow(subset(test.data, is.na(test.data$Age)))))
 test.data <- adjust.data(test.data)
 test.data <- assign.cabin(test.data)
 print(sprintf("After correction: # of missing Age: %d", nrow(subset(test.data, is.na(test.data$Age)))))
 
 # prepare data for ML algorithms
-df <- preprocess(train.data)
+print(sprintf("Preprocess train data"))
+real.train.df <- preprocess(train.data)
+train.df <- real.train.df # working copy
 # prepare test.data for ML, we do not write survived attribute
+print(sprintf("Preprocess test data"))
 real.test.df <- preprocess(test.data, survived=F)
 test.df <- real.test.df # working copy
 
 # drop Survived attribute from real test dataset
 real.test.df <- drop(test.df, c("Survived"))
 
-make.cor.plot(df)
-
 # drop some attribute before writing
-#df <- drop(df, c("id"))
-#test.df <- drop(test.df, c("id"))
+train.df <- drop(train.df, c("id", "Ticket"))
+test.df <- drop(test.df, c("id", "Ticket"))
+
+# make correlation plots for train/test data
+make.cor.plot(train.df, "train_cor")
+make.cor.plot(test.df, "test_cor")
 
 # make two subset datasets
-sdf <- subset(df, df$Survived==1)
-ndf <- subset(df, df$Survived==0)
+print(sprintf("Make sdf/ndf"))
+sdf <- subset(real.train.df, real.train.df$Survived==1)
+ndf <- subset(real.train.df, real.train.df$Survived==0)
 
 # write data out for SVM
-write.csv(df, file="model.csv")
+print(sprintf("Write model.csv"))
+write.csv(train.df, file="model.csv")
 cmd="cat model.csv | sed 's/\"\"/\"id\"/g' > t.csv; mv -f t.csv model.csv"
 system(cmd)
 
 # write data in arff format for Weka
-write.arff(df, file="model.arff")
+print(sprintf("Write model.arff"))
+write.arff(train.df, file="model.arff")
 cmd="cat model.arff  | sed \"s/Survived numeric/Survived {0,1}/g\" > t.arff; mv -f t.arff model.arff"
 system(cmd)
 # write test data in arff format
@@ -274,20 +199,28 @@ system(cmd)
 # Run R ML algorithms
 source("src/R/ksvm.R")
 source("src/R/rf.R")
+source("src/R/nnet.R")
 source("src/R/KMeansCluster.R")
-do.ksvm(df, real.test.df)
-do.rf(df, real.test.df)
+print(sprintf("Run KSVM"))
+do.ksvm(train.df, real.test.df)
+print(sprintf("Run RandomForest"))
+do.rf(train.df, real.test.df)
+#print(sprintf("Run NNET"))
+#do.nnet(df, real.test.df)
 
 # re-run ML with additional cluster info
+print(sprintf("Run Clustering"))
 #clusters <- do.clustering(df, 6:10)
 #nclusters <- c(3,4,5,6,7,8,9,10)
 nclusters <- c(7)
-dd <- df
+train.dd <- train.df
 test.dd <- real.test.df
+train.dd <- drop(train.dd, c("id", "Ticket"))
+test.dd <- drop(test.dd, c("id", "Ticket"))
 for(nc in nclusters) {
-    print(sprintf("####### Add cluster %i ########", nc))
     fname <- sprintf("rf%i", nc)
-    dd <- add.cluster(dd, nc, TRUE)
+    train.dd <- add.cluster(train.dd, nc, TRUE)
     test.dd <- add.cluster(test.dd, nc, FALSE)
-    do.rf(dd, test.dd, fname)
+    print(sprintf("Run RandomForest with cluster %i", nc))
+    do.rf(train.dd, test.dd, fname)
 }
