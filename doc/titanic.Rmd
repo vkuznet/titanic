@@ -1,0 +1,139 @@
+# Titanic: Machine Learning from Disaster
+
+DATASCI 450: Deriving Knowledge from Data at Scale
+Authors: V. Kuznetsov, J. Arturo Covarrubias
+
+## Problem statement
+
+Predict survival on the Titanic
+
+### Data analysis
+
+We used all available tools for this data analysis, including R, Weka, Python.
+The data clean-up and preparation was done in R, the modeling was done both in R and Weka.
+The bash shell scripts and python were used for batching purposes (see later).
+
+The team **valya** was registered by one of us (V. Kuznetsov) under the kaggle web site:
+
+<div id="container">
+    <img class=center src=images/kaggle_team.png />
+    Kaggle team profile
+</div>
+
+### Part 1
+
+In section we cover model description, answering the following questions:
+
+- what feature looks most promising for modeling
+- do you need to deal with missing values?
+- scale the attributes
+- compare with multiple classifiers
+- kaggle model
+
+We started from data exploration by plotting various attributes from provided
+data set. The most interested plots are shown below:
+
+<div id="container">
+    <img class=center src=images/mosaic.png />
+    Fig 1. Mosaic plot of survival rate for Class, Sex and Age attributes.
+</div>
+
+The data survival rate plot, see Fig 1, clearly indicated that
+survival rate increases significantly for females and children.
+Most children were in 2nd and 3rd class. Most females in first and second
+classes, while only half of them survived from the third class.
+
+Then we looked at different class distributions. Here is class vs SibSp and Parch
+attributes:
+<div id="container">
+    <img class=center src=images/class_plots1.png />
+    Fig 2. Survival rate for Class, SibSp and Parch attributes.
+</div>
+
+<div id="container">
+    <img class=center src=images/class_plots2.png />
+    Fig 3. Survival rate for Class, Age and Embarked attributes.
+</div>
+
+<div id="container">
+    <img class=center src=images/class_plots3.png />
+    Fig 4. Survival rate for Class and Sec attributes
+</div>
+
+Based on aforementioned plots
+<div id="container">
+    <img class=center src=images/class_plots4.png />
+    Fig 5. Survival rates for age/class/sec/embarked attributes with
+    and without imposed cut.
+</div>
+
+<div id="container">
+    <img class=center src=images/cor.png />
+    Fig 6. Correlation matrix
+</div>
+
+
+### Part 2
+
+- model improvement
+  - missing values
+  - scale attributes
+  - bins
+  - new features
+
+- describe data cleaning, transformation
+- kaggle models
+
+### Part 3
+
+- multiple classifiers, different model settings
+- screen-shots
+- model strategy
+- model ensembles
+
+## Kaggle models
+
+The initial submission was made using Weka RandomForest model. We received
+0.73206 score with position 5780:
+<div id="container">
+    <img class=center src=images/kaggle1.png />
+Fig 1. Kaggle submission 1.
+</div>
+
+The second submission was due to assignment of Age based on review of
+SibSp and Parch attributes as well as adding CabinId, TicketId variables. The later was
+just numerical values of Cabin and Ticket factors in R. For this submission we used
+R RandomForest implementation which scored almost 95% accuracy on the training set.
+At this step we jumped to position 2829 with score 0.77512:
+<div id="container">
+    <img class=center src=images/kaggle2.png />
+Fig 1. Kaggle submission 2.
+</div>
+
+Kaggle submission 3 and 4 were based on improvements with cabin assignment and
+matching ticket ids with cabin categories. At this stage we run in parallel R
+KSVM (with RBFKernel) and R RandomForest ML algorithms. Due to these changes we
+jumped up 2154 points in a leadership board with score 0.78947 and position 678:
+<div id="container">
+    <img class=center src=images/kaggle3a.png />
+Fig 1. Kaggle score 3.
+</div>
+
+Kaggle submission 5, 6 and 7 were mostly fine-tuning of SVM and RandomForest models.
+They did not improve our final score.
+
+Kaggle submission 8 was based on introduction of new Married attributed, which
+was assigned as following: 1 for names with Miss. in them, 2 for Mrs., 3 for
+Mr.  and zero otherwise. The RF model shown an percentage improvement and we
+submit our results. On a leadership board we jumped up 1.435% to score 0.80383
+and position 145:
+
+<div id="container">
+    <img class=center src=images/kaggle4.png />
+Fig 1. Kaggle score 4.
+</div>
+
+## References
+
+1. The code for this assignment can be found at
+   https://github.com/vkuznet/titanic
