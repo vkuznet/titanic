@@ -14,7 +14,7 @@ mkdir -p log
 #cat log/svm.R.log | egrep "Correctly|Kappa"
 
 # run all weka algorithms
-for alg in "NaiveBayes" "j48" "RandomForest" "BFTree" "SMO" "Vote" "AdaBoostM1"
+for alg in "NaiveBayes" "j48" "RandomForest" "BFTree" "SMO" "Vote" #"AdaBoostM1"
 do
     echo -e "\n===> run weka.$alg.sh"
     ./src/Weka/weka.$alg.sh $model > log/$alg.log
