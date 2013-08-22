@@ -8,9 +8,13 @@ library(caret)
 
 set.seed(1)
 
+# create parallel backend
+cl <- makeCluster(2)
+registerDoParallel(cl)
+
 run.caret <- function(d, model="rf") {
 
-x <- d
+x <- drop(d, c("PassengerId"))
 x$Survived <- sapply(x$Survived, function(y) {as.factor(y)})
 print(str(x))
 inTrain <- createDataPartition(x$Survived, p = .75, list = FALSE)
@@ -46,13 +50,17 @@ if (model=="ksvm") {
 }
 print(m.fit, printCall = FALSE)
 print(class(m.fit))
+print(sprintf("Final Model"))
 print(class(m.fit$finalModel))
-par(mfrow=c(2,1))
-plot(m.fit, xTrans = function(x) log2(x))
-densityplot(m.fit, metric = "Kappa", pch = "|")
+#par(mfrow=c(2,1))
+#plot(m.fit, xTrans = function(x) log2(x))
+#densityplot(m.fit, metric = "Kappa", pch = "|")
 
 m.pred <- predict(m.fit, testDescr)
 cm <- confusionMatrix(m.pred, testClass)
+print(sprintf("Confusion Matrix"))
 print(cm)
+
+return(m.fit)
 
 }
