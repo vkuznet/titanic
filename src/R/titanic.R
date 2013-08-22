@@ -63,7 +63,7 @@ preprocess <- function(df.orig, survived=T) {
     df.new <- data.frame(PassengerId=df.orig$PassengerId)
 
     # W attribute
-#    df.new$W <- df.orig$W
+    df.new$W <- df.orig$W
 
     # Title attribute
     df.new$Title <- df.orig$Title
@@ -207,6 +207,11 @@ print(sprintf("Run RandomForest"))
 do.rf(train.df, real.test.df)
 #print(sprintf("Run NNET"))
 #do.nnet(df, real.test.df)
+
+# Load caret stuff, here how it should be used (default alg is "rf"):
+#      run.caret(train.df)
+#      run.caret(train.df, "ksvm")
+source("src/R/caret.R")
 
 # re-run ML with additional cluster info
 print(sprintf("Run Clustering"))
