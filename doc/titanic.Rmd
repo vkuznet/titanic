@@ -60,18 +60,90 @@ attributes:
     Fig 4. Survival rate for Class and Sec attributes
 </div>
 
-Based on aforementioned plots
+Based on aforementioned plots we concluded that Age, Sex, Class are most powerful
+attributes. Below you can see a plot how they behave upon applying the cut:
+*age<18&class<3|sex=F&class<3|non-embarked*:
+
 <div id="container">
     <img class=center src=images/class_plots4.png />
     Fig 5. Survival rates for age/class/sec/embarked attributes with
     and without imposed cut.
 </div>
 
+Here is correlation matrix for for current set of attributes:
+
 <div id="container">
     <img class=center src=images/cor.png />
     Fig 6. Correlation matrix
 </div>
 
+We run multiple Weka ML algorithms, including NaiveBayes, J48, RandomForest, SMO,
+AdaBoostM1, etc. Here their initial benchmarks:
+
+```
+===> run weka.NaiveBayes.sh
+Correctly Classified Instances         688               77.2166 %
+Kappa statistic                          0.4917
+Correctly Classified Instances         687               77.1044 %
+Kappa statistic                          0.4889
+
+===> run weka.j48.sh
+Correctly Classified Instances         779               87.4299 %
+Kappa statistic                          0.7245
+Correctly Classified Instances         716               80.3591 %
+Kappa statistic                          0.5761
+
+===> run weka.RandomForest.sh
+Correctly Classified Instances         871               97.7553 %
+Kappa statistic                          0.9522
+Correctly Classified Instances         717               80.4714 %
+Kappa statistic                          0.5764
+
+===> run weka.BFTree.sh
+Correctly Classified Instances         722               81.0325 %
+Kappa statistic                          0.5865
+Correctly Classified Instances         709               79.5735 %
+Kappa statistic                          0.5569
+
+===> run weka.SMO.sh
+Correctly Classified Instances         701               78.6756 %
+Kappa statistic                          0.5421
+Correctly Classified Instances         701               78.6756 %
+Kappa statistic                          0.5421
+
+===> run weka.Vote.sh
+Correctly Classified Instances         723               81.1448 %
+Kappa statistic                          0.5901
+Correctly Classified Instances         708               79.4613 %
+Kappa statistic                          0.5572
+
+===> run weka.AdaBoostM1.sh
+Correctly Classified Instances         891              100      %
+Kappa statistic                          1
+Correctly Classified Instances         712               79.9102 %
+Kappa statistic                          0.5635
+```
+
+The initial submission was made using Weka RandomForest model. We received
+0.73206 score with position 5780:
+<div id="container">
+    <img class=center src=images/kaggle1.png />
+    Kaggle submission 1.
+</div>
+
+It gave the following classification:
+
+```
+Correctly Classified Instances         890               99.8878 %
+Incorrectly Classified Instances         1                0.1122 %
+Root mean squared error                  0.142
+
+while with cross-validation it had
+
+Correctly Classified Instances         725               81.3692 %
+Incorrectly Classified Instances       166               18.6308 %
+Root mean squared error                  0.3768
+```
 
 ### Part 2
 
@@ -92,13 +164,6 @@ Based on aforementioned plots
 - model ensembles
 
 ## Kaggle models
-
-The initial submission was made using Weka RandomForest model. We received
-0.73206 score with position 5780:
-<div id="container">
-    <img class=center src=images/kaggle1.png />
-Fig 1. Kaggle submission 1.
-</div>
 
 The second submission was due to assignment of Age based on review of
 SibSp and Parch attributes as well as adding CabinId, TicketId variables. The later was
