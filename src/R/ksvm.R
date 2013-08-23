@@ -2,7 +2,7 @@
 # clean-up session parameters
 #rm(list=ls())
 
-do.ksvm <- function(tdf, testdata, fname="ksvm") {
+do.ksvm <- function(tdf, testdata, fname="ksvm", sigma=1, cost=1) {
     # exclude id columne to work with ML
     train.df <- drop(tdf, c("id", "PassengerId"))
     # during training we use the same dataset, but exclude classification var
@@ -19,14 +19,8 @@ do.ksvm <- function(tdf, testdata, fname="ksvm") {
     # PolyKernels
     poly <- polydot(degree=1, scale=1, offset=0)
     # RBF kernels
-    rbf <- rbfdot(sigma=1)
-    cost <- 1
-    # so far sigma=3 and C=3 gave 93.5%
-    #rbf <- rbfdot(sigma=3)
-    #cost <- 3
-    # caret suggested based on 25/75 split: sigma=0.0879 and C=2
-    #rbf <- rbfdot(sigma=0.0879)
-    #cost <- 2
+    sigma <- sigma
+    rbf <- rbfdot(sigma=sigma)
 
     # kernel choice
     k <- rbf
