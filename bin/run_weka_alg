@@ -8,13 +8,8 @@ model=$1
 rfile=`cat $model | sed "s/arff/csv/g"`
 mkdir -p log
 
-# run R SVM algorithms
-#echo -e "\n===> run svm.R"
-#./src/R/svm.R $model > log/svm.R.log
-#cat log/svm.R.log | egrep "Correctly|Kappa"
-
 # run all weka algorithms
-for alg in "NaiveBayes" "j48" "RandomForest" "BFTree" "SMO" "Vote" #"AdaBoostM1"
+for alg in "NaiveBayes" "j48" "RandomForest" "BFTree" "SMO" "Vote" "Stacking" "AdaBoostM1"
 do
     echo -e "\n===> run weka.$alg.sh"
     ./src/Weka/weka.$alg.sh $model > log/$alg.log
