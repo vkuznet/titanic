@@ -9,8 +9,8 @@ library(caret)
 set.seed(1)
 
 # create parallel backend
-cl <- makeCluster(2)
-registerDoParallel(cl)
+#cl <- makeCluster(2)
+#registerDoParallel(cl)
 
 run.caret <- function(d, model="rf") {
 
