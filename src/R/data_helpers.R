@@ -2,7 +2,7 @@
 
 # helper function to convert given list of attributes into binary form
 to.binary <- function(x, attr) {
-    if(!is.null(attrs)) return(x)
+    if(is.null(attrs)) return(x)
     for(a in attrs) {
         if(length(as.integer(which(names(x)==a)))>0)
             x <- break.down(x, a)
@@ -136,9 +136,11 @@ assign.title <- function(r) {
     } else if(grepl("Dr\\. ", r$Name)) {
         title <- 3
     } else if(grepl("Master\\. ", r$Name)) {
-        title <- 4
+#        title <- 4
+        title <- 1
     } else if(grepl("Capt\\. ", r$Name)) {
         title <- 5
+        title <- 3
     } else {
         title <- 0
     }
@@ -157,34 +159,53 @@ assign.title <- function(r) {
 # if Name has Mrs, it meas married woman
 # if Name has Miss, it meas un-married woman, so we'll assign a kid
 # if Name has Mr., we'll assign an adult
-assign.age <- function(r, adult.age, kid.age) {
+assign.age <- function(xdf, r, adult.age, kid.age) {
     age <- r$Age
-    if(is.na(r$Age) & grepl("Mrs\\. ", r$Name)) {
+    if(is.na(age) & grepl("Mrs\\. ", r$Name)) {
         age <- adult.age
     }
-    else if(is.na(r$Age) & grepl("Miss\\. ", r$Name)) {
+    else if(is.na(age) & grepl("Miss\\. ", r$Name)) {
         age <- kid.age
     }
-    else if(is.na(r$Age) & grepl("Master\\. ", r$Name)) {
+    else if(is.na(age) & grepl("Master\\. ", r$Name)) {
         age <- kid.age
     }
-    else if(is.na(r$Age) & grepl("Mr\\. ", r$Name)) {
+    else if(is.na(age) & grepl("Mr\\. ", r$Name)) {
         age <- adult.age
     }
-    else if (is.na(r$Age) & r$Parch>2) {
+#    else if(is.na(age) & !r$Parch) {
+    else if(is.na(age) & r$Parch>=0 &r$Parch<=2) {
+        if(n.tickets(xdf, r$PassengerId)==0)
         age <- adult.age
-    }
-    else if(is.na(r$Age) & r$SibSp>1) {
+        else
         age <- kid.age
     }
-    else if(is.na(r$Age) & !r$SibSp & !r$Parch) {
+#    else if(is.na(age) & !r$SibSp) {
+    else if(is.na(age) & r$SibSp>=0 & r$SibSp<=2) {
+        if(n.tickets(xdf, r$PassengerId)==0)
+        age <- adult.age
+        else
+        age <- kid.age
+    }
+    else if (is.na(age) & r$Parch>2) {
         age <- adult.age
     }
-    else if(is.na(r$Age)){
-#        age <- adult.age
+    else if(is.na(age) & r$SibSp>1) {
         age <- kid.age
+    }
+    else if(is.na(age)){
+        age <- adult.age
     }
     return(round(age))
+}
+
+# helper function to find number of tickets for given PassengerId
+n.tickets <- function(x, pid) {
+    # find tid for given pid
+    tid <- x[x$PassengerId==pid,]$TicketId
+    # find rows with given tid
+    tdf <- x[x$TicketId==tid,]
+    return(nrow(tdf))
 }
 
 # return either kid or adult
