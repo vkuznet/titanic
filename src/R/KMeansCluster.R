@@ -60,23 +60,16 @@ do.clustering <- function(tdf, nc=seq(2:10)) {
 }
 
 # helper function to add cluster with given nc to given dataframe
-add.cluster <- function(x, nc, survived) {
-    # exclude PassengerId while doing clustering, but save it for later
+add.cluster <- function(x, nc) {
+    # exclude PassengerId/Survived while doing clustering, but save it for later
     pid <- x$PassengerId
-    x <- drop(x, c("id", "PassengerId"))
-    if (survived) {
-        sur <- x$Survived
-        d <- drop(x, c("Survived"))
-    } else {
-        d <- x
-    }
-    cls <- kmeans(x, nc)
+    sur <- x$Survived
+    d <- drop(x, c("id", "PassengerId", "Survived"))
+    cls <- kmeans(d, nc)
     cname <- sprintf("cls.%i", nc)
     d[,c(cname)] <- cls$cluster
-    if (survived) {
-        d$Survived <- sur
-    }
-    # put back PassengerId
+    # put back PassengerId/Survived
     d$PassengerId <- pid
+    d$Survived <- sur
     return (d)
 }
