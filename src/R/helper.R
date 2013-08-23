@@ -31,6 +31,11 @@ sample.index <- function(x) {
     return(testindex)
 }
 
+# helper function to dump on stdout rows with NA
+na.rows <- function(x) {
+    print(unique(is.na(x)))
+}
+
 # helper function to calculate error of predicion
 pred.error <- function(obs, pred) {
     error <- sqrt((sum((obs-pred)^2))/length(obs))
