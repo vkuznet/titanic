@@ -2,7 +2,7 @@
 # clean-up session parameters
 #rm(list=ls())
 
-do.rf <- function(tdf, testdata, fname="rf") {
+do.rf <- function(tdf, testdata, fname="rf", mtry=NULL) {
     # exclude id columne to work with ML
     train.df <- drop(tdf, c("id", "PassengerId"))
     # during training we use the same dataset, but exclude classification var
@@ -10,8 +10,11 @@ do.rf <- function(tdf, testdata, fname="rf") {
 
     # run RandomForest, make sure that the variable used for classification is a
     # factor. For prediction use the same dataset but exclude classification var.
-    rf.model <- randomForest(Survived~., data=train.df,
-                            importance=T, proximity=F)
+    if (is.null(mtry)) {
+        rf.model <- randomForest(Survived~., data=train.df, importance=T, proximity=F)
+    } else {
+        rf.model <- randomForest(Survived~., data=train.df, importance=T, proximity=F, mtry=mtry)
+    }
     rf.pred <- predict(rf.model, test.df)
     print(rf.model)
 
