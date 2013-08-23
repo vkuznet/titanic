@@ -16,8 +16,10 @@ graph.reset()
 my.path <- paste0(getwd(), "/data/")
 file.name <- "train.csv"
 train.data <- read.csv(paste0(my.path, file.name), header=T)
+orig.train.df <- train.data
 file.name <- "test.csv"
 test.data <- read.csv(paste0(my.path, file.name), header=T)
+orig.test.df <- test.data
 
 # get all tickets from both train and test sets to form unique set
 tickets.1 <- sapply(train.data$Ticket, function(x) {as.character(x)})
@@ -42,12 +44,17 @@ adjust.data <- function(x, debug=F) {
         row$Parch <- adjust.Parch(row)
         row$SibSp <- adjust.SibSp(row)
         row$Age <- assign.age(row, adult.age, kid.age)
+        row$Child <- assign.child(row, age.thr) # run after Parch/SibSp/Age
         row$W <- assign.weigth(row, age.thr) # run after we assign age
+        row$Family <- assign.family(row)
         row$Title <- assign.title(row)
-        row$CabinCat <- cabin.category(row$Cabin)
-        row$CabinId <- assign.cid(row$Cabin, cabins)
-        row$TicketId <- assign.tid(row$Ticket, tickets)
-        row$Fbin <- assign.fbin(row, step=10, nbins=10)
+        row$TicketId <- assign.tid(row, tickets)
+        row$Embarked <- assign.eid(row)
+        row$CabinCat <- cabin.category(row) # run after assigned TicketId
+        row$CabinId <- assign.cid(row, cabins)
+        row$Fare <- assign.fare(row)
+        row$Gender <- assign.gender(row)
+        row$Fbin <- assign.bin(row, "Fare", c(0, 10, 30, 100))
         if (debug == T) {
             print(row)
         }
@@ -57,80 +64,28 @@ adjust.data <- function(x, debug=F) {
 }
 
 # pre-process input data
-preprocess <- function(df.orig, survived=T) {
+preprocess <- function(df.orig, attrs=NULL, survived=T) {
 
     # Take all numeric attributes from original df and put it into new dataframe
-    df.new <- data.frame(PassengerId=df.orig$PassengerId)
+    df.new <- df.orig
 
-    # W attribute
-    df.new$W <- df.orig$W
+    # adjust cabin category attribute based on ticket ids in given dataset
+    df.new <- adjust.cabin(df.new)
 
-    # Title attribute
-    df.new$Title <- df.orig$Title
-
-    # SibSp attribute
-    df.new$SibSp <- df.orig$SibSp
-
-    # Parch attribute
-    df.new$Parch <- df.orig$Parch
-
-    # Cabin attribute
-#    df.new$CabinCat <- df.orig$CabinCat
-    df.new$CabinId <- df.orig$CabinId
-
-    # Ticket attribute
-    df.new$TicketId <- df.orig$TicketId
-#    df.new$Ticket <- df.orig$Ticket
-
-    # Age attribute
-    df.new$Age <- df.orig$Age
-#    df.new$Age <- sapply(df.orig$Age, function(x) {
-#        if(x<=20) return(0)
-#        else if(x>20&x<=40) return(1)
-#        else if(x>40&x<=60) return(2)
-#        else return(3)
-#    })
-    # binary age categories
-#    df.new$Child <- sapply(df.orig$Age, function(x) {if(!is.na(x) & x<age.thr) return(1) else return(0)})
-#    df.new$Adult <- sapply(df.orig$Age, function(x) {if(!is.na(x) & x>=age.thr) return(1) else return(0)})
-#    df.new$Age.NA <- sapply(df.orig$Age, function(x) {if(is.na(x)) return(1) else return(0)})
-
-    # Class attribute
-    df.new$Pclass <- df.orig$Pclass
-
-    # Gender attribute, convert Gender Male to 1, Female to 0
-    df.new$Gender <- sapply(df.orig$Sex, function(x) {if(x=="male") return(1) else return(0)})
-
-    # Fare attribute, put Fare in bins
-    fare <- sapply(df.orig$Fare, function(x) {if(is.na(x)) return(50) else return(x)})
-    df.new$Fare <- scale(fare) # or use scale(fare)
-#    df.new$Fbin <- df.orig$Fbin
-
-    # Embarked attribute
-    embarked <- sapply(df.orig$Embarked,
-        function(x) {
-            if(as.character(x)=="C") return(1)
-            else if(as.character(x)=="S") return(2)
-            else if(as.character(x)=="Q") return(3)
-            else return(3) # missing value
-        })
-    df.new$Embarked <- unlist(embarked)
-
-    # add classifier as last column
-    if (survived==T) {
-        df.new$Survived <- as.factor(df.orig$Survived)
-    } else {
-        df.new$Survived <- rep("?", nrow(df.orig))
-    }
+    # adjust family attribute based on ticket ids in given dataset
+    df.new <- adjust.family(df.new)
 
     # break down attributes into binary form
-#    attrs <- c("Title", "SibSp", "Parch", "Pclass", "Embarked", "Fbin")
-#    for(a in attrs) {
-#        df.new <- break.down(df.new, a)
-#    }
+    df.new <- to.binary(df.new, attrs)
+
+    # classifier attribute
+    if (survived==T) {
+        sur <- as.factor(df.new$Survived)
+    } else {
+        sur <- rep("?", nrow(df.orig))
+    }
 
     # make sure that Survived is a last column
-    sur <- df.new$Survived
     df.new <- drop(df.new, c("Survived"))
     df.new$Survived <- sur
 
@@ -143,7 +98,6 @@ preprocess <- function(df.orig, survived=T) {
 print(sprintf("Fix Age attribute of train data"))
 print(sprintf("Prior correction: # of missing Age: %d", nrow(subset(train.data, is.na(train.data$Age)))))
 train.data <- adjust.data(train.data)
-train.data <- assign.cabin(train.data)
 print(sprintf("After correction: # of missing Age: %d", nrow(subset(train.data, is.na(train.data$Age)))))
 # make some plots for our data
 make.plots(train.data)
@@ -152,28 +106,34 @@ make.plots(train.data)
 print(sprintf("Fix Age attribute on test data"))
 print(sprintf("Prior correction: # of missing Age: %d", nrow(subset(test.data, is.na(test.data$Age)))))
 test.data <- adjust.data(test.data)
-test.data <- assign.cabin(test.data)
 print(sprintf("After correction: # of missing Age: %d", nrow(subset(test.data, is.na(test.data$Age)))))
 
 # prepare data for ML algorithms
+#attrs <- c("Title", "SibSp", "Parch", "Pclass", "Embarked", "Fbin")
+attrs <- NULL # list of attributes to convert to binary form
 print(sprintf("Preprocess train data"))
-real.train.df <- preprocess(train.data)
+real.train.df <- preprocess(train.data, attrs)
 train.df <- real.train.df # working copy
 # prepare test.data for ML, we do not write survived attribute
 print(sprintf("Preprocess test data"))
-real.test.df <- preprocess(test.data, survived=F)
+real.test.df <- preprocess(test.data, attrs, survived=F)
 test.df <- real.test.df # working copy
 
 # drop Survived attribute from real test dataset
 real.test.df <- drop(test.df, c("Survived"))
 
 # drop some attribute before writing
-train.df <- drop(train.df, c("id", "Ticket"))
-test.df <- drop(test.df, c("id", "Ticket"))
+drop.attrs <- c("id", "Ticket", "Name", "Sex", "Cabin", "W")
+train.df <- drop(train.df, drop.attrs)
+test.df <- drop(test.df, drop.attrs)
+print(sprintf("Train data"))
+print(head(train.df))
+print(sprintf("Test data"))
+print(head(test.df))
 
 # make correlation plots for train/test data
-make.cor.plot(train.df, "train_cor")
-make.cor.plot(test.df, "test_cor")
+#make.cor.plot(train.df, "train_cor")
+#make.cor.plot(test.df, "test_cor")
 
 # make two subset datasets
 print(sprintf("Make sdf/ndf"))
@@ -202,35 +162,35 @@ source("src/R/rf.R")
 source("src/R/nnet.R")
 source("src/R/KMeansCluster.R")
 print(sprintf("Run KSVM"))
-do.ksvm(train.df, real.test.df)
+do.ksvm(train.df, test.df)
 print(sprintf("Run RandomForest"))
-do.rf(train.df, real.test.df)
+do.rf(train.df, test.df)
 #print(sprintf("Run NNET"))
-#do.nnet(df, real.test.df)
+#do.nnet(df, test.df)
 
 # Load caret stuff, here how it should be used (default alg is "rf"):
 #      run.caret(train.df)
 #      run.caret(train.df, "ksvm")
-source("src/R/caret.R")
 # uncomment loop below when you want to test multiple MLs via caret
+#source("src/R/caret.R")
 #for(m in c("rf", "svmRadial", "svmLinear", "svmPoly")) {
 #    print(sprintf("Run caret with %s", m))
 #    run.caret(train.df, m)
 #}
 
 # re-run ML with additional cluster info
-print(sprintf("Run Clustering"))
+#print(sprintf("Run Clustering"))
 #clusters <- do.clustering(df, 6:10)
 #nclusters <- c(3,4,5,6,7,8,9,10)
-nclusters <- c(7)
-train.dd <- train.df
-test.dd <- real.test.df
-train.dd <- drop(train.dd, c("id", "Ticket"))
-test.dd <- drop(test.dd, c("id", "Ticket"))
-for(nc in nclusters) {
-    fname <- sprintf("rf%i", nc)
-    train.dd <- add.cluster(train.dd, nc, TRUE)
-    test.dd <- add.cluster(test.dd, nc, FALSE)
-    print(sprintf("Run RandomForest with cluster %i", nc))
-    do.rf(train.dd, test.dd, fname)
-}
+#nclusters <- c(7)
+#train.dd <- train.df
+#test.dd <- real.test.df
+#train.dd <- drop(train.dd, c("id", "Ticket"))
+#test.dd <- drop(test.dd, c("id", "Ticket"))
+#for(nc in nclusters) {
+#    fname <- sprintf("rf%i", nc)
+#    train.dd <- add.cluster(train.dd, nc, TRUE)
+#    test.dd <- add.cluster(test.dd, nc, FALSE)
+#    print(sprintf("Run RandomForest with cluster %i", nc))
+#    do.rf(train.dd, test.dd, fname)
+#}
