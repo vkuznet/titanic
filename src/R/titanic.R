@@ -43,9 +43,11 @@ adjust.data <- function(x, debug=F) {
         row <- x[i,]
         row$Parch <- adjust.Parch(row)
         row$SibSp <- adjust.SibSp(row)
-        row$Age <- assign.age(row, adult.age, kid.age)
-        row$Child <- assign.child(row, age.thr) # run after Parch/SibSp/Age
-        row$W <- assign.weigth(row, age.thr) # run after we assign age
+        row$Age <- row$Age #will be replaced in second loop
+        row$Child <- 0 # placeholder
+#        row$Age <- assign.age(row, adult.age, kid.age)
+#        row$Child <- assign.child(row, age.thr) # run after Parch/SibSp/Age
+#        row$W <- assign.weigth(row, age.thr) # run after we assign age
         row$Family <- assign.family(row)
         row$Title <- assign.title(row)
         row$TicketId <- assign.tid(row, tickets)
@@ -60,6 +62,14 @@ adjust.data <- function(x, debug=F) {
         }
         ndf <- rbind(ndf, row)
     }
+    for(i in 1:nrow(ndf)) {
+        row <- ndf[i,]
+        row$Age <- assign.age(ndf, row, adult.age, kid.age)
+        row$Child <- assign.child(row, age.thr) # run after Parch/SibSp/Age
+        ndf[i,] <- row
+    }
+    ndf$Fare <- scale(ndf$Fare)
+    ndf$Age <- scale(ndf$Age)
     return(ndf)
 }
 
@@ -100,7 +110,7 @@ print(sprintf("Prior correction: # of missing Age: %d", nrow(subset(train.data, 
 train.data <- adjust.data(train.data)
 print(sprintf("After correction: # of missing Age: %d", nrow(subset(train.data, is.na(train.data$Age)))))
 # make some plots for our data
-make.plots(train.data)
+#make.plots(train.data)
 
 # Fix Age attribute of test data
 print(sprintf("Fix Age attribute on test data"))
@@ -111,6 +121,8 @@ print(sprintf("After correction: # of missing Age: %d", nrow(subset(test.data, i
 # prepare data for ML algorithms
 #attrs <- c("Title", "SibSp", "Parch", "Pclass", "Embarked", "Fbin")
 attrs <- NULL # list of attributes to convert to binary form
+print(sprintf("Drop attributes"))
+print(attrs)
 print(sprintf("Preprocess train data"))
 real.train.df <- preprocess(train.data, attrs)
 train.df <- real.train.df # working copy
@@ -123,7 +135,7 @@ test.df <- real.test.df # working copy
 real.test.df <- drop(test.df, c("Survived"))
 
 # drop some attribute before writing
-drop.attrs <- c("id", "Ticket", "Name", "Sex", "Cabin", "W")
+drop.attrs <- c("id", "Ticket", "Name", "Sex", "Cabin", "CabinCat", "Fbin")
 train.df <- drop(train.df, drop.attrs)
 test.df <- drop(test.df, drop.attrs)
 print(sprintf("Train data"))
@@ -161,10 +173,16 @@ source("src/R/ksvm.R")
 source("src/R/rf.R")
 source("src/R/nnet.R")
 source("src/R/KMeansCluster.R")
-print(sprintf("Run KSVM"))
+source("src/R/caret.R")
+
+print(sprintf("##### Benchmark KSVM #####"))
 do.ksvm(train.df, test.df)
-print(sprintf("Run RandomForest"))
+do.ksvm(train.df, test.df, split=T)
+
+print(sprintf("##### Benchmark RandomForest #####"))
 do.rf(train.df, test.df)
+do.rf(train.df, test.df, split=T)
+
 #print(sprintf("Run NNET"))
 #do.nnet(df, test.df)
 
@@ -172,25 +190,23 @@ do.rf(train.df, test.df)
 #      run.caret(train.df)
 #      run.caret(train.df, "ksvm")
 # uncomment loop below when you want to test multiple MLs via caret
-#source("src/R/caret.R")
 #for(m in c("rf", "svmRadial", "svmLinear", "svmPoly")) {
 #    print(sprintf("Run caret with %s", m))
 #    run.caret(train.df, m)
 #}
 
 # re-run ML with additional cluster info
-#print(sprintf("Run Clustering"))
+print(sprintf("### Run Clustering ###"))
 #clusters <- do.clustering(df, 6:10)
 #nclusters <- c(3,4,5,6,7,8,9,10)
-#nclusters <- c(7)
-#train.dd <- train.df
-#test.dd <- real.test.df
-#train.dd <- drop(train.dd, c("id", "Ticket"))
-#test.dd <- drop(test.dd, c("id", "Ticket"))
-#for(nc in nclusters) {
-#    fname <- sprintf("rf%i", nc)
-#    train.dd <- add.cluster(train.dd, nc, TRUE)
-#    test.dd <- add.cluster(test.dd, nc, FALSE)
-#    print(sprintf("Run RandomForest with cluster %i", nc))
-#    do.rf(train.dd, test.dd, fname)
-#}
+nclusters <- c(7)
+set.seed(1)
+for(nc in nclusters) {
+    fname <- sprintf("rf%i", nc)
+    cat("\n--------------------------\n")
+    print(sprintf("Add cluster %d", nc))
+    train.dd <- add.cluster(train.df, nc)
+    test.dd <- add.cluster(test.df, nc)
+    do.ksvm(train.dd, test.dd, fname, split=T)
+    do.rf(train.dd, test.dd, fname, split=T)
+}
