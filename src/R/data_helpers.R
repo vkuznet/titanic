@@ -1,7 +1,7 @@
 # Data Helpers functions
 
 # helper function to convert given list of attributes into binary form
-to.binary <- function(x, attr) {
+to.binary <- function(x, attrs) {
     if(is.null(attrs)) return(x)
     for(a in attrs) {
         if(length(as.integer(which(names(x)==a)))>0)
@@ -38,17 +38,17 @@ assign.cid <- function(r, cabins) {
 
 # helper function to adjust Parch
 adjust.Parch <- function(r) {
-    if(r$Parch>3) {
-        r$Parch <- 3
-    }
+#    if(r$Parch>3) {
+#        r$Parch <- 3
+#    }
     return(r$Parch)
 }
 
 # helper function to adjust SibSp
 adjust.SibSp <- function(r) {
-    if(r$SibSp>3) {
-        r$SibSp <- 3
-    }
+#    if(r$SibSp>3) {
+#        r$SibSp <- 3
+#    }
     return(r$SibSp)
 }
 
