@@ -2,43 +2,56 @@
 # clean-up session parameters
 #rm(list=ls())
 
-do.rf <- function(tdf, testdata, fname="rf", mtry=NULL, split=FALSE, printModel=FALSE) {
-    # exclude id columne to work with ML
-    train.df <- drop(tdf, c("id", "PassengerId"))
-    # during training we use the same dataset, but exclude classification var
-    test.df <- drop(train.df, c("Survived"))
-    survived <- train.df$Survived
+do.rf <- function(tdf, testdata, drops=NULL, fname="rf", mtry=NULL,
+                    formula=NULL, testindex=NULL, printModel=FALSE) {
 
+    # drop requested attributes
+    if(!is.null(drops))
+        tdf <- drop(tdf, drops)
+
+    train.df <- tdf
+    test.df <- train.df
     # use 70/30 splitting
-    if (split==FALSE) {
+    if (is.null(testindex)) {
         print(sprintf("Run RandomForest, use full training set"))
+        survived <- train.df$Survived
+        pids <- train.df$PassengerId
     } else {
-        index <- 1:nrow(train.df)
-        testindex <- sample(index, trunc(length(index)/3))
         testset <- train.df[testindex,]
         trainset <- train.df[-testindex,]
         train.df <- trainset
-        test.df <- drop(testset, c("Survived"))
+        test.df <- testset
         survived <- testset$Survived
+        pids <- testset$PassengerId
         print(sprintf("Run RandomForest, train %d, test %d", nrow(trainset), nrow(testset)))
     }
 
+    # exclude id/PassengerId columns to work with ML
+    test.df.copy <- test.df
+    train.df <- drop(train.df, c("id", "PassengerId"))
+    test.df <- drop(test.df, c("id", "PassengerId", "Survived"))
+
     # run RandomForest, make sure that the variable used for classification is a
     # factor. For prediction use the same dataset but exclude classification var.
+    if (is.null(formula)) formula <- as.formula("Survived~.")
+    print(formula)
     if (is.null(mtry)) {
-        rf.model <- randomForest(Survived~., data=train.df, importance=T, proximity=F)
+        rf.model <- randomForest(formula, data=train.df, importance=T, proximity=F)
     } else {
-        rf.model <- randomForest(Survived~., data=train.df, importance=T, proximity=F, mtry=mtry)
+        rf.model <- randomForest(formula, data=train.df, importance=T, proximity=F, mtry=mtry)
     }
     rf.pred <- predict(rf.model, test.df)
     if(printModel==TRUE) print(rf.model)
 
-    # write out prediction
-    pfile <- sprintf("%s_prediction.csv", fname)
-    write.prediction(rf.model, testdata, pfile)
-
     # print confugtion matrix
-    conf.matrix(survived, rf.pred)
+    if(!is.null(testindex)) {
+        pfile <- sprintf("%s_prediction_test.csv", fname)
+#        mdf <- misclassified(test.df.copy, rf.pred)
+    } else {
+        pfile <- sprintf("%s_prediction.csv", fname)
+    }
+    write.prediction(rf.model, testdata, pfile)
+    conf.matrix(survived, rf.pred, printTable=F)
 
     # make RF plots
 #    fig.name <- paste0("rf1", ext)
@@ -66,4 +79,6 @@ do.rf <- function(tdf, testdata, fname="rf", mtry=NULL, split=FALSE, printModel=
     #}
     #par(op)
     #dev.off()
+
+    return(int.pred(rf.pred))
 }
