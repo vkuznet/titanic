@@ -8,12 +8,32 @@ library(e1071)
 library(kernlab)
 library(nnet)
 library(MASS)
+library(XML)
+library(digest)
+library(Hmisc)
 
 # set seed
 set.seed(12345)
 
 source("src/R/plot_helpers.R")
 source("src/R/data_helpers.R")
+
+### Helper function
+download <- function(url, dir="./data") {
+    dir.create(dir, showWarnings = FALSE)
+    dest.file <- paste(dir, digest(url, algo="md5"), sep="/")
+    if  (!file.exists(dest.file)) {
+        cat("download url", url, "\n")
+        download.file(url, dest=dest.file)
+    }
+    return(dest.file)
+}
+
+# helper function to order data frame for given set of attributes
+df.order <- function(x, x.order) {
+    d <- x[with(x, order(x.order)), ]
+    return(d)
+}
 
 # helper function to drop columns from given dataset
 drop <- function(df, drops) {
@@ -51,16 +71,38 @@ int.pred <- function(p) {
 
 # Helper fuction to build and print confution matrix for given observeraion and
 # prediction variables
-conf.matrix <- function(obs, pred) {
+conf.matrix <- function(obs, pred, printTable=TRUE) {
     obs <- int.pred(obs)
     pred <- int.pred(pred)
     # build confusion matrix
     tab <- table(observed = obs, predicted = pred)
     cls <- classAgreement(tab)
-    print(tab)
+    if(printTable==TRUE) print(tab)
     msg <- sprintf("Correctly classified: %f, kappa %f", cls$diag, cls$kappa)
     print(msg)
     pred.error(obs, pred)
+}
+
+# merge prediction
+merge.pred <- function(fits.df, printTable=TRUE) {
+    pids <- fits.df$pid
+    obs <- fits.df$Survived
+    pred <- rowSums(fits.df[3:ncol(fits.df)])/2
+    pred <- sapply(pred, function(x) {if(x==0.5) return(1) else return(as.integer(x))})
+    conf.matrix(obs, pred, printTable)
+}
+
+# helper function to print misclassified rows
+misclassified <- function(xdf, pred) {
+    ndf <- data.frame()
+    for(i in 1:nrow(xdf)) {
+        row <- xdf[i,]
+        if(row$Survived != pred[i]) {
+            ndf <- rbind(ndf, row)
+        }
+    }
+    print(ndf)
+    print(sprintf("Misclassified: %d", nrow(ndf)))
 }
 
 roc <- function(fit, df, fname) {
