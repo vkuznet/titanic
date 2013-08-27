@@ -73,3 +73,18 @@ add.cluster <- function(x, nc) {
     d$Survived <- sur
     return (d)
 }
+
+test.clustering <- function(traindata, testdata, nclusters=c(7)) {
+    # re-run ML with additional cluster info
+    print(sprintf("### Run Clustering ###"))
+    set.seed(1)
+    for(nc in nclusters) {
+        fname <- sprintf("rf%i", nc)
+        cat("\n--------------------------\n")
+        print(sprintf("Add cluster %d", nc))
+        train.dd <- add.cluster(traindata, nc)
+        test.dd <- add.cluster(testdata, nc)
+        do.ksvm(train.dd, test.dd, fname)
+        do.rf(train.dd, test.dd, fname)
+    }
+}
