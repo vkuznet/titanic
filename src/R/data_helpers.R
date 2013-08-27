@@ -1,5 +1,23 @@
 # Data Helpers functions
 
+# helper function for title assignment
+isMaster <- function(x) {
+    x <- tolower(x)
+    return(grepl("master\\. ", x) | grepl(" master ", x))
+}
+isMiss <- function(x) {
+    x <- tolower(x)
+    return(grepl("miss\\. ", x) | grepl(" miss ", x))
+}
+isMr <- function(x) {
+    x <- tolower(x)
+    return(grepl("mr\\. ", x) | grepl(" mr ", x) | grepl(" fr ", x) | grepl(" dr ", x) | grepl(" sir ", x))
+}
+isMrs <- function(x) {
+    x <- tolower(x)
+    return(grepl("mrs\\. ", x) | grepl(" mrs ", x) | grepl(" lady ", x))
+}
+
 # helper function to convert given list of attributes into binary form
 to.binary <- function(x, attrs) {
     if(is.null(attrs)) return(x)
@@ -10,6 +28,45 @@ to.binary <- function(x, attrs) {
     return(x)
 }
 
+# helper function to assing ticket
+assign.ticket <- function(r) {
+    tname <- as.character(r)
+    if(tname=="LINE") return(0)
+    if(tname=="") return(0)
+    if(tname=="NA") return(0)
+    tlist <- unlist(strsplit(tname, " "))
+    ticket <- gsub("[A-Za-z]", "", tlist[length(tlist)])
+    ticket <- gsub(" ", "", ticket)
+    return(as.integer(ticket))
+}
+
+# helper function to assign short name, return lowercase name
+assign.sname <- function(r) {
+    fname <- tolower(as.character(r))
+    s <- unlist(strsplit(gsub("[,\\.]", "", fname), " "))
+    sname <- paste(paste(s[1], s[2], sep=" "), s[3], sep=" ")
+    master <- grepl(" master ", sname)
+    sname <- gsub(" master ", " mr ", sname)
+    sname <- gsub(" lady ", " mrs ", sname)
+    sname <- gsub(" sir ", " mr ", sname)
+    sname <- gsub("ö", "o", sname)
+    if(length(s)>3) sname <- paste(sname, s[4], sep=" ")
+    if(grepl(" jr", fname) | master) sname <- paste0(sname, " jr")
+    return(tolower(sname))
+}
+
+# helper function to assign name id
+assign.fid <- function(row, fam.names) {
+    person <- sapply(row$Name, function(x) {tolower(unlist(strsplit(as.character(x), ","))[1])})
+    fid <- which(fam.names==person)
+    if(length(fid) > 1 | length(fid)==0){
+        print(sprintf("FOUND multiple fids or fid=0"))
+        print(row)
+    }
+#    if (person=="ware") print(sprintf("Name: %s, fid: %d", person, fid))
+    return (as.integer(fid)) 
+}
+
 # helper function to assign embarked id
 assign.eid <- function(r) {
     if(is.na(r$Embarked)) return(1)
@@ -17,7 +74,7 @@ assign.eid <- function(r) {
     if(x=="C") return(1)
     else if(x=="S") return(2)
     else if(x=="Q") return(3)
-    else return(1) # missing value
+    else return(4) # missing value
 }
 
 # helper function to assign ticket id
@@ -69,48 +126,107 @@ assign.weigth <- function(r, thr) {
     w <- 1 # default weight
     if (r$Pclass==1) {
         if(r$Sex=="female") {
-            if(r$Age<thr) {
-                w <- 9
+            if(r$Age<=thr) {
+                w <- 50
             } else {
-                w <- 10
+                w <- 95
             }
         } else {
-            if(r$Age<thr) {
-                w <- 8
+            if(r$Age<=thr) {
+                w <- 60
             } else {
-                w <- 4
+                w <- 40
             }
         }
     } else if (r$Pclass==2) {
         if(r$Sex=="female") {
-            if(r$Age<thr) {
-                w <- 10
+            if(r$Age<=thr) {
+                w <- 99
             } else {
-                w <- 9
+                w <- 90
             }
         } else {
-            if(r$Age<thr) {
-                w <- 6
+            if(r$Age<=thr) {
+                w <- 95
             } else {
-                w <- 2
+                w <- 10
             }
         }
     } else {
         if(r$Sex=="female") {
-            if(r$Age<thr) {
-                w <- 6
+            if(r$Age<=thr) {
+                w <- 60
             } else {
-                w <- 5
+                w <- 45
             }
         } else {
-            if(r$Age<thr) {
-                w <- 3
+            if(r$Age<=thr) {
+                w <- 40
             } else {
-                w <- 2
+                w <- 15
             }
         }
     }
+    if(r$Family==1) {
+        wf <- 1
+    } else {
+        wf <- 0.2
+    }
+    if(r$cid==1) {
+        wc <- 1
+    } else {
+        wc <- 0.7
+    }
+    f.L <- 10
+    f.M <- 30
+    if(r$Embarked==1) { # Embarked=C
+        if(r$cid==1) {
+            if(r$Fare<=f.L) we <- 50
+            else if(r$Fare>f.L&r$Fare<f.M) we <- 60
+            else we <- 80
+        } else {
+            if(r$Fare<=f.L) we <- 25
+            else if(r$Fare>f.L&r$Fare<f.M) we <- 50
+            else we <-60
+        }
+    } else if(r$Embarked==2) { # Embarked=S
+        if(r$cid==1) {
+            if(r$Fare<=f.L) we <- 30
+            else if(r$Fare>f.L&r$Fare<f.M) we <- 80
+            else we <- 70
+        } else {
+            if(r$Fare<=f.L) we <- 15
+            else if(r$Fare>f.L&r$Fare<f.M) we <- 35
+            else we <- 30
+        }
+    } else { # Embarked=Q
+        if(r$cid==1) {
+            if(r$Fare<=f.L) we <- 10
+            else if(r$Fare>f.L&r$Fare<f.M) we <- 90
+            else we <- 50
+        } else {
+            if(r$Fare<=f.L) we<- 40
+            else if(r$Fare>f.L&r$Fare<f.M) we <- 30
+            else we <- 50
+        }
+    }
+    w <- (we/100)*(w/100)*wf
+#    if(r$SP>0 & w<0.1) {
+#        w2 <- 0.01
+#    } else {
+#        w2 <- 1
+#    }
+#    w <- w*w2
     return(w)
+}
+
+# helper function to assign family name
+assign.fname <- function(r) {
+    x <- as.character(r$Name)
+    fname <- unlist(strsplit(x, ","))[1]
+    fname <- tolower(fname)
+#    return(capitalize(fname))
+    return(fname)
 }
 
 # assign family attribute based on
@@ -125,22 +241,14 @@ assign.family <- function(r) {
 # make new Title category: 1-Miss, 2-Mrs, 3-Mr, 4-Dr, 0-otherwise
 assign.title <- function(r) {
     title <- 0
-    if(grepl("Miss\\. ", r$Name)) {
+    if(isMiss(r$Name)) {
         title <- 1
-    } else if(grepl("Mrs\\. ", r$Name)) {
+    } else if(isMrs(r$Name)) {
         title <- 2
-    } else if(grepl("Lady\\. ", r$Name)) {
-        title <- 2
-    } else if(grepl("Mr\\. ", r$Name)) {
+    } else if(isMr(r$Name)) {
         title <- 3
-    } else if(grepl("Dr\\. ", r$Name)) {
-        title <- 3
-    } else if(grepl("Master\\. ", r$Name)) {
-#        title <- 4
-        title <- 1
-    } else if(grepl("Capt\\. ", r$Name)) {
-        title <- 5
-        title <- 3
+    } else if(isMaster(r$Name)) {
+        title <- 4
     } else {
         title <- 0
     }
@@ -161,16 +269,16 @@ assign.title <- function(r) {
 # if Name has Mr., we'll assign an adult
 assign.age <- function(xdf, r, adult.age, kid.age) {
     age <- r$Age
-    if(is.na(age) & grepl("Mrs\\. ", r$Name)) {
+    if(is.na(age) & isMrs(r$Name)) {
         age <- adult.age
     }
-    else if(is.na(age) & grepl("Miss\\. ", r$Name)) {
-        age <- kid.age
+    else if(is.na(age) & isMiss(r$Name)) {
+        age <- adult.age
     }
-    else if(is.na(age) & grepl("Master\\. ", r$Name)) {
-        age <- kid.age
+    else if(is.na(age) & isMaster(r$Name)) {
+        age <- kid.age 
     }
-    else if(is.na(age) & grepl("Mr\\. ", r$Name)) {
+    else if(is.na(age) & isMr(r$Name)) {
         age <- adult.age
     }
 #    else if(is.na(age) & !r$Parch) {
@@ -202,9 +310,9 @@ assign.age <- function(xdf, r, adult.age, kid.age) {
 # helper function to find number of tickets for given PassengerId
 n.tickets <- function(x, pid) {
     # find tid for given pid
-    tid <- x[x$PassengerId==pid,]$TicketId
+    tid <- x[x$PassengerId==pid,]$tid
     # find rows with given tid
-    tdf <- x[x$TicketId==tid,]
+    tdf <- x[x$tid==tid,]
     return(nrow(tdf))
 }
 
@@ -216,19 +324,16 @@ assign.child <- function(r, thr) {
         if (r$Parch>2) {
             return(adult)
         }
-        else if(grepl("Mrs\\. ", r$Name)) {
+        else if(isMrs(r$Name)) {
             return(adult)
         }
-        else if(grepl("Miss\\. ", r$Name)) {
-            return(kid)
-        }
-        else if(grepl("Master\\. ", r$Name)) {
-            return(kid)
-        }
-        else if(grepl("Mr\\. ", r$Name)) {
+        else if(isMiss(r$Name)) {
             return(adult)
         }
-        else if(grepl("Dr\\. ", r$Name)) {
+        else if(isMaster(r$Name)) {
+            return(kid)
+        }
+        else if(isMr(r$Name)) {
             return(adult)
         }
         else if (!r$Parch) {
@@ -282,13 +387,13 @@ cabin.category <- function(r) {
 
 # helper function to re-assign cabin based on ticket info
 adjust.cabin <- function(x) {
-    d <- x[with(x, order(-TicketId, -CabinCat)), ]
+    d <- x[with(x, order(-tid, -ccat)), ]
     tid <- -1
     for(i in 1:nrow(d)) {
-        if (tid == d[i,]$TicketId) { # tickets are the same
-            d[i,]$CabinCat <- d[i-1,]$CabinCat
+        if (tid == d[i,]$tid) { # tickets are the same
+            d[i,]$ccat <- d[i-1,]$ccat
         } else {
-            tid <- d[i,]$TicketId
+            tid <- d[i,]$tid
         }
     }
     d <- d[with(d, order(PassengerId)),]
@@ -296,12 +401,12 @@ adjust.cabin <- function(x) {
 }
 
 # helper function to re-assign family attribute based on ticket info
-adjust.family <- function(x) {
-    d <- x[with(x, order(-TicketId, -Family)), ]
+adjust.family.v1 <- function(x) {
+    d <- x[with(x, order(-tid, -Family)), ]
     tid <- -1
     for(i in 1:nrow(d)) {
         row <- d[i,]
-        pids <- d[d$TicketId==row$TicketId,]$PassengerId
+        pids <- d[d$tid==row$tid,]$PassengerId
         if(length(pids)>1) { # rows with the same tickets
             for(pid in pids) {
                 d[i,]$Family <- 1
@@ -312,3 +417,44 @@ adjust.family <- function(x) {
     return (d)
 }
 
+adjust.family <- function(x) {
+    d <- x[with(x, order(-fid, -Family)), ]
+    fid <- -1
+    for(i in 1:nrow(d)) {
+        row <- d[i,]
+        pids <- d[d$fid==row$fid,]$PassengerId
+        if(length(pids)>1) { # rows with the same tickets
+            for(pid in pids) {
+                d[i,]$Family <- 1
+            }
+        }
+    }
+    d <- d[with(d, order(PassengerId)),]
+    return (d)
+}
+
+write.model <- function(xdf, drops=NULL) {
+
+    # drop requested attributes
+    if(!is.null(drops))
+        train.df <- drop(xdf, drops)
+    else 
+        train.df <- xdf
+
+    # write data out for SVM
+    print(sprintf("Write model.csv"))
+    write.csv(train.df, file="model.csv")
+    cmd="cat model.csv | sed 's/\"\"/\"id\"/g' > t.csv; mv -f t.csv model.csv"
+    system(cmd)
+
+    # write data in arff format for Weka
+    print(sprintf("Write model.arff"))
+    write.arff(train.df, file="model.arff")
+    cmd="cat model.arff  | sed \"s/Survived numeric/Survived {0,1}/g\" > t.arff; mv -f t.arff model.arff"
+    system(cmd)
+    # write test data in arff format
+    write.arff(test.df, file="test.arff")
+    cmd="cat test.arff  | sed -e \"s/Survived string/Survived {0,1}/g\" -e \"s/'//g\" > t.arff; mv -f t.arff test.arff"
+    system(cmd)
+
+}
