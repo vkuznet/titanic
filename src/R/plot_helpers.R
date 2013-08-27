@@ -33,7 +33,7 @@ make.plots <- function(df.orig) {
         else return("Crew")
     })
     #df.ch$Sex <- sapply(df.orig$Sex, function(x) {if(x=="male") return("Male") else return("Female")})
-    df.ch$Sec <- df.orig$Sex
+    df.ch$Sex <- df.orig$Sex
     df.ch$Survived <- sapply(df.orig$Survived, function(x) {if(x==1) return("Yes") else return("No")})
     df.ch$Age <- sapply(df.orig$Age,
     function(x) {
@@ -46,6 +46,13 @@ make.plots <- function(df.orig) {
     fig.name <- paste0("mosaic", ext)
     start.plot(fig.name)
     mosaic(~Class+Sex+Age+Survived, data=df.ch, shade=TRUE, legend=TRUE)
+    dev.off()
+    df.ch$Embarked <- sapply(df.orig$Embarked, function(x){if(x==1) return("C") else if(x==2) return("S") else return("Q")})
+    df.ch$Cabin <- sapply(df.orig$cid, function(x){if(x==1) return("Yes") else return("No")})
+    df.ch$Fare <- sapply(df.orig$Fare, function(x){if(x<=10) return("L") else if(x>10&x<=30) return("M") else return("H")})
+    fig.name <- paste0("mosaic2", ext)
+    start.plot(fig.name)
+    mosaic(~Embarked+Cabin+Fare+Survived, data=df.ch, shade=TRUE, legend=TRUE)
     dev.off()
 
     # make plots of SibSp, Ticket, Parch vs Pclass
@@ -105,7 +112,11 @@ make.plots <- function(df.orig) {
 }
 
 # make correlation plot
-make.cor.plot <- function (x, fname="cor") {
+make.cor.plot <- function (x, fname="cor", drops=NULL) {
+    # drop requested attributes
+    if(!is.null(drops))
+        x <- drop(x, drops)
+
     df <- drop(x, c("Survived", "PassengerId"))
     # make correlation matrix
     idx <- 2
