@@ -11,6 +11,10 @@ alg2="weka.classifiers.trees.RandomForest -I 10 -K 0 -S 1"
 #alg3="weka.classifiers.bayes.NaiveBayes"
 alg3="weka.classifiers.trees.J48 -C 0.25 -M 2"
 
+alg1="weka.classifiers.trees.RandomForest -I 10 -K 0 -S 1"
+alg1="weka.classifiers.functions.SMO -C 1.0 -L 0.0010 -P 1.0E-12 -N 0 -V -1 -W 1 -K \"$kernel\""
+alg2="weka.classifiers.trees.J48 -C 0.25 -M 2"
+
 opts="-S 1 -B \"$alg1\" -B \"$alg2\" -R AVG"
 
 if [ $# -eq 0 ]; then
@@ -18,5 +22,6 @@ java weka.classifiers.meta.Vote
 echo "Usage: weka.Vote.sh <file.arff>"
 else
 data=$1
-java weka.classifiers.meta.Vote -t $data -S 1 -B "$alg1" -B "$alg2" -B "$alg3" -R MAJ
+#java weka.classifiers.meta.Vote -t $data -S 1 -B "$alg1" -B "$alg2" -B "$alg3" -R MAJ
+java weka.classifiers.meta.Vote -t $data -S 1 -B "$alg1" -B "$alg2" -R MAJ
 fi
