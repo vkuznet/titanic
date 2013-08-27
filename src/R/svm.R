@@ -2,26 +2,32 @@
 # clean-up session parameters
 #rm(list=ls())
 
-do.svm <- function(tdf, testdata, fname="svm", split=FALSE, printModel=FALSE) {
-    # exclude id columne to work with ML
-    train.df <- drop(tdf, c("id", "PassengerId"))
-    # during training we use the same dataset, but exclude classification var
-    test.df <- drop(train.df, c("Survived"))
-    survived <- train.df$Survived
+do.svm <- function(tdf, testdata, drops, fname="svm", testindex=NULL, printModel=FALSE) {
+    # drop requested attributes
+    if(!is.null(drops))
+        tdf <- drop(tdf, drops)
 
+    train.df <- tdf
+    test.df <- train.df
     # use 70/30 splitting
-    if (split==FALSE) {
-        print(sprintf("Run SVM, use full training set"))
+    if (is.null(testindex)) {
+        print(sprintf("Run KSVM, use full training set"))
+        survived <- train.df$Survived
+        pids <- train.df$PassengerId
     } else {
-        index <- 1:nrow(train.df)
-        testindex <- sample(index, trunc(length(index)/3))
         testset <- train.df[testindex,]
         trainset <- train.df[-testindex,]
         train.df <- trainset
-        test.df <- drop(testset, c("Survived"))
+        test.df <- testset
         survived <- testset$Survived
-        print(sprintf("Run SVM, train %d, test %d", nrow(trainset), nrow(testset)))
+        pids <- testset$PassengerId
+        print(sprintf("Run KSVM, train %d, test %d", nrow(trainset), nrow(testset)))
     }
+
+    # exclude id/PassengerId columns to work with ML
+    test.df.copy <- test.df
+    train.df <- drop(train.df, c("id", "PassengerId"))
+    test.df <- drop(test.df, c("id", "PassengerId", "Survived"))
 
     # kernels
     k <- sprintf('polynomial')
@@ -31,17 +37,26 @@ do.svm <- function(tdf, testdata, fname="svm", split=FALSE, printModel=FALSE) {
     cross <- 10
 
     # run svm algorithm (e1071 library) for given vector of data and kernel
-    svm.model <- svm(Survived~., data=train.df,
+    if (is.null(formula)) formula <- as.formula("Survived~.")
+    print(formula)
+    svm.model <- svm(formula, data=train.df,
                  type=type, cross=cross, kernel=k, gamma=gamma, degree=degree)
     if(printModel==TRUE) print(svm.model)
 
     # the last column of this dataset is what we'll predict, so we'll exclude it
     svm.pred <- predict(svm.model, test.df)
 
-    # write out prediction
-    pfile <- sprintf("%s_prediction.csv", fname)
-    write.prediction(svm.model, testdata, pfile)
-
     # print confugtion matrix
-    conf.matrix(survived, svm.pred)
+    if(!is.null(testindex)) {
+        conf.matrix(survived, svm.pred, printTable=T)
+        mdf <- misclassified(test.df.copy, svm.pred)
+    } else {
+        # write out prediction
+        pfile <- sprintf("%s_prediction.csv", fname)
+        write.prediction(svm.model, testdata, pfile)
+
+        conf.matrix(survived, svm.pred, printTable=F)
+    }
+
+    return(int.pred(svm.pred))
 }
