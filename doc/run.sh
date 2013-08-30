@@ -6,7 +6,7 @@ if [ -d $idir ]; then
     echo "Clean-up previous structure"
     rm -rf $idir
 fi
-mkdir -p mkdir -p $name.rmd2html
+mkdir -p $name.rmd2html
 ln -s $PWD/images $idir/images
 ./rmd2html.R $name.Rmd
 
