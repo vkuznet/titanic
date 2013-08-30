@@ -36,8 +36,12 @@ df.order <- function(x, x.order) {
 }
 
 # helper function to drop columns from given dataset
-drop <- function(df, drops) {
-    return(df[,!names(df) %in% drops])
+drop <- function(xdf, drops) {
+    return(xdf[,!names(xdf) %in% drops])
+}
+# helper function to drop columns from given dataset
+keep <- function(xdf, keeps) {
+    return(xdf[,names(xdf) %in% keeps])
 }
 
 # helper function to get sample index for given dataframe
