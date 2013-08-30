@@ -18,6 +18,32 @@ isMrs <- function(x) {
     return(grepl("mrs\\. ", x) | grepl(" mrs ", x) | grepl(" lady ", x))
 }
 
+# helper function to assign SW (survival weight) attribute based on 
+# number of people with the same ticket and their inverse Age
+assign.SW <- function(x, tickets) {
+    t <- x$T
+    if(x$Age>0) {
+        w <- 1/x$Age
+    } else {
+        w <- 1/mean(x$Age)
+    }
+    sur <- x$Survived
+    ntickets <- length(which(tickets==as.integer(t)))
+    delta <- 0.3
+    if(x$Pclass==1) f<-1
+    else if(x$Pclass==1) f<-2
+    else f<-3
+    if(ntickets>0) {
+        return(w*ntickets/f)
+#        if(is.null(sur)) return(0.5)
+#        else if(as.character(sur)=="0") return(runif(1,0,0.5+delta))
+#        else if(as.character(sur)=="1") return(runif(1,0.5-delta,1))
+#        else return(0.5)
+    }
+#    return(0.5)
+    return(w/f)
+}
+
 # helper function to convert given list of attributes into binary form
 to.binary <- function(x, attrs) {
     if(is.null(attrs)) return(x)
@@ -127,13 +153,13 @@ assign.weigth <- function(r, thr) {
     if (r$Pclass==1) {
         if(r$Sex=="female") {
             if(r$Age<=thr) {
-                w <- 50
+                w <- 1
             } else {
                 w <- 95
             }
         } else {
             if(r$Age<=thr) {
-                w <- 60
+                w <- 99
             } else {
                 w <- 40
             }
@@ -155,9 +181,9 @@ assign.weigth <- function(r, thr) {
     } else {
         if(r$Sex=="female") {
             if(r$Age<=thr) {
-                w <- 60
+                w <- 40
             } else {
-                w <- 45
+                w <- 50
             }
         } else {
             if(r$Age<=thr) {
@@ -167,16 +193,26 @@ assign.weigth <- function(r, thr) {
             }
         }
     }
+    w <- (w/100)
+    return(w)
+}
+assign.wf <- function(x) {
     if(r$Family==1) {
-        wf <- 1
+        w <- 1
     } else {
-        wf <- 0.2
+        w <- 0.2
     }
+    return(w)
+}
+assign.wc <- function(x) {
     if(r$cid==1) {
         wc <- 1
     } else {
         wc <- 0.7
     }
+    return(wc)
+}
+assign.we <- function(x) {
     f.L <- 10
     f.M <- 30
     if(r$Embarked==1) { # Embarked=C
@@ -210,14 +246,8 @@ assign.weigth <- function(r, thr) {
             else we <- 50
         }
     }
-    w <- (we/100)*(w/100)*wf
-#    if(r$SP>0 & w<0.1) {
-#        w2 <- 0.01
-#    } else {
-#        w2 <- 1
-#    }
-#    w <- w*w2
-    return(w)
+    we <- (we/100)
+    return(we)
 }
 
 # helper function to assign family name
@@ -269,42 +299,45 @@ assign.title <- function(r) {
 # if Name has Mr., we'll assign an adult
 assign.age <- function(xdf, r, adult.age, kid.age) {
     age <- r$Age
-    if(is.na(age) & isMrs(r$Name)) {
-        age <- adult.age
+    if(is.na(age)) {
+        if(isMrs(r$Name)) {
+            age <- adult.age
+        }
+        else if(isMiss(r$Name)) {
+            age <- adult.age
+        }
+        else if(isMaster(r$Name)) {
+            age <- kid.age 
+        }
+        else if(isMr(r$Name)) {
+            age <- adult.age
+        }
+        else if(r$Parch>=0 &r$Parch<=2) {
+            if(n.tickets(xdf, r$PassengerId)==0)
+            age <- adult.age
+            else
+            age <- kid.age
+        }
+        else if(r$SibSp>=0 & r$SibSp<=2) {
+            if(n.tickets(xdf, r$PassengerId)==0)
+            age <- adult.age
+            else
+            age <- kid.age
+        }
+        else if (r$Parch>2) {
+            age <- adult.age
+        }
+        else if(r$SibSp>1) {
+            age <- kid.age
+        }
+        else {
+            age <- adult.age
+        }
+        print(sprintf("Adjust age for %s, %s", r$Name, age))
     }
-    else if(is.na(age) & isMiss(r$Name)) {
-        age <- adult.age
-    }
-    else if(is.na(age) & isMaster(r$Name)) {
-        age <- kid.age 
-    }
-    else if(is.na(age) & isMr(r$Name)) {
-        age <- adult.age
-    }
-#    else if(is.na(age) & !r$Parch) {
-    else if(is.na(age) & r$Parch>=0 &r$Parch<=2) {
-        if(n.tickets(xdf, r$PassengerId)==0)
-        age <- adult.age
-        else
-        age <- kid.age
-    }
-#    else if(is.na(age) & !r$SibSp) {
-    else if(is.na(age) & r$SibSp>=0 & r$SibSp<=2) {
-        if(n.tickets(xdf, r$PassengerId)==0)
-        age <- adult.age
-        else
-        age <- kid.age
-    }
-    else if (is.na(age) & r$Parch>2) {
-        age <- adult.age
-    }
-    else if(is.na(age) & r$SibSp>1) {
-        age <- kid.age
-    }
-    else if(is.na(age)){
-        age <- adult.age
-    }
-    return(round(age))
+    age <- round(age)
+    if(age==0) age <- 1
+    return(age)
 }
 
 # helper function to find number of tickets for given PassengerId
