@@ -47,9 +47,21 @@ make.plots <- function(df.orig) {
     start.plot(fig.name)
     mosaic(~Class+Sex+Age+Survived, data=df.ch, shade=TRUE, legend=TRUE)
     dev.off()
-    df.ch$Embarked <- sapply(df.orig$Embarked, function(x){if(x==1) return("C") else if(x==2) return("S") else return("Q")})
+    df.ch$Embarked <- sapply(df.orig$Embarked,
+    function(x) {
+        if(x==1) return("C")
+        else if(x==2) return("S")
+        else if(x==3) return("Q")
+        else return("B")
+    })
     df.ch$Cabin <- sapply(df.orig$cid, function(x){if(x==1) return("Yes") else return("No")})
-    df.ch$Fare <- sapply(df.orig$Fare, function(x){if(x<=10) return("L") else if(x>10&x<=30) return("M") else return("H")})
+    df.ch$Fare <- sapply(df.orig$Fare,
+    function(x) {
+        if(x<=10) return("L")
+        else if(x>10&x<=30)
+        return("M")
+        else return("H")
+    })
     fig.name <- paste0("mosaic2", ext)
     start.plot(fig.name)
     mosaic(~Embarked+Cabin+Fare+Survived, data=df.ch, shade=TRUE, legend=TRUE)
