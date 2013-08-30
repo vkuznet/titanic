@@ -4,8 +4,8 @@ rm(list=ls())
 
 # set Age threshold to divide Adults and Children
 #age.thr <- 8
-#age.thr <- 10
-age.thr <- 12
+age.thr <- 10
+#age.thr <- 12
 
 # load helper functions, libraries, set seeds, etc.
 source("src/R/helper.R")
@@ -34,6 +34,8 @@ orig.test.df$T <- sapply(orig.test.df$Ticket, assign.ticket)
 # adjust our train/test data wrt aux.data
 merged.train.df <- merge.with.aux(tit.data, orig.train.df)
 merged.test.df <- merge.with.aux(tit.data, orig.test.df)
+write.csv(merged.train.df, "merged.train.csv")
+write.csv(merged.test.df, "merged.test.csv")
 
 # re-assign train/test data to merged ones
 train.data <- merged.train.df
@@ -49,6 +51,9 @@ tickets.1 <- sapply(train.data$Ticket, function(x) {as.character(x)})
 tickets.2 <- sapply(test.data$Ticket, function(x) {as.character(x)})
 tickets <- unique(c(tickets.1, tickets.2))
 
+# get all tickets from both train and test sets to form unique set
+digi.tickets <- c(train.data$T, test.data$T)
+
 # get all cabins from both train and test sets to form unique set
 cabins.1 <- sapply(train.data$Cabin, function(x) {as.character(x)})
 cabins.2 <- sapply(test.data$Cabin, function(x) {as.character(x)})
@@ -60,8 +65,6 @@ set.seed(12345)
 # adjust our input data
 adjust.data <- function(x, debug=F) {
     ndf <- data.frame()
-#    adult.age <- mean(x$Age, na.rm=T)
-#    kid.age <- age.thr-1
     adult.age <- runif(1, age.thr+1, max(x$Age, na.rm=T))
     kid.age <- runif(1, 0, age.thr-1)
     for(i in 1:nrow(x)) {
@@ -71,9 +74,8 @@ adjust.data <- function(x, debug=F) {
         row$SP <- row$SibSp+row$Parch
         row$Age <- row$Age #will be replaced in second loop
         row$Child <- 0 # placeholder
-        row$W <- 0
-#        row$Age <- assign.age(row, adult.age, kid.age)
-#        row$Child <- assign.child(row, age.thr) # run after Parch/SibSp/Age
+        row$W <- 0 # placeholder
+        row$SW <- 0 # placeholder
         row$Family <- assign.family(row)
         row$fname<- assign.fname(row)
         row$Title <- assign.title(row)
@@ -84,8 +86,7 @@ adjust.data <- function(x, debug=F) {
         row$Fare <- assign.fare(row)
         row$Gender <- assign.gender(row)
         row$fid <- assign.fid(row, f.names)
-#        row$Fbin <- assign.bin(row, "Fare", c(0, 10, 30, 100))
-        row$Fbin <- assign.bin(row, "Fare", seq(0,100,10))
+        row$Fbin <- assign.bin(row, "Fare", c(0, 10, 30, 100))
         if (debug == T) {
             print(row)
         }
@@ -95,7 +96,8 @@ adjust.data <- function(x, debug=F) {
         row <- ndf[i,]
         row$Age <- assign.age(ndf, row, adult.age, kid.age)
         row$Child <- assign.child(row, age.thr) # run after Parch/SibSp/Age
-        row$W <- assign.weigth(row, age.thr) # run after we assign age
+#        row$W <- assign.weigth(row, age.thr) # run after we assign age
+        row$SW <- assign.SW(row, digi.tickets)
         ndf[i,] <- row
     }
 #    ndf$Fare <- scale(ndf$Fare)
@@ -156,15 +158,12 @@ test.data <- adjust.data(test.data)
 print(sprintf("After correction: # of missing Age: %d", nrow(subset(test.data, is.na(test.data$Age)))))
 
 # prepare data for ML algorithms
-#drop.attrs <- c("id", "Ticket", "Name", "Sex", "Cabin","Age","Embarked", "ccat", "Fbin", "SibSp", "Parch")
-#drop.attrs <- c("id", "Ticket", "Name", "Sex", "Cabin", "Fbin", "SibSp", "Parch", "Title", "tid")
-#drop.attrs <- c("id", "Ticket", "Name", "Sex", "Cabin", "Fbin", "tid", "SibSp", "Parch", "Age", "Fare")
-#drop.attrs <- c("id", "Ticket", "Name", "Sex", "Cabin", "SibSp", "Parch", "Fbin", "W", "sname")
-#drop.attrs <- c("id", "Ticket", "Name", "Sex", "Cabin", "Fbin", "W", "sname", "Title", "SP")
-#drop.attrs <- c("id", "Ticket", "Name", "Sex", "Cabin", "Fbin", "W", "sname", "SibSp", "Parch", "tid")
 drop.attrs <- c("id", "Ticket", "Name", "Sex", "Cabin", "Fbin", "W", "sname", "tid", "SP", "fname", "Family")
-print(sprintf("Drop attributes"))
-print(drop.attrs)
+keep0 <- c("PassengerId", "Survived", "Pclass", "Age", "SibSp", "Parch", "Fare",
+            "Embarked", "T", "jid", "Class", "Servant.1", "Servant.2", "Child", "SW",
+            "Title", "ccat", "cid", "fid")
+print(sprintf("Keep attributes"))
+print(keep0)
 
 # binary attributes
 bin.attrs <- NULL # list of attributes to convert to binary form
@@ -215,17 +214,43 @@ index <- 1:nrow(train.df)
 testindex <- sample(index, trunc(length(index)/3))
 formula <- NULL
 
+# split data into first class and the rest
+dd1 <- subset(train.df, train.df$Pclass==1)
+ddt1 <- subset(test.df, test.df$Pclass==1)
+index1 <- 1:nrow(dd1)
+testindex1 <- sample(index1, trunc(length(index1)/3))
+dd2 <- subset(train.df, train.df$Pclass!=1)
+ddt2 <- subset(test.df, test.df$Pclass!=1)
+index2 <- 2:nrow(dd2)
+testindex2 <- sample(index2, trunc(length(index2)/3))
+keep1 <- c("PassengerId", "Survived", "Age", "T", "Title", "Gender", "ccat")
+keep2 <- c("PassengerId", "Survived", "Fare", "T", "jid", "Class", "Servant.2", "SP", "Child", "SW", "Title", "ccat", "cid", "Gender")
+
+#drop.common <- c("id", "Ticket", "Name", "Sex", "Cabin", "Fbin", "W", "sname")
+#drops1 <- c(drop.common, c("tid", "fname", "Parch", "SibSp", "fid", "Family", "Pclass", "Servant.2", "Servant.1", "Embarked", "T", "Class", "SW", "ccat", "Fare", "ccat", "SP", "Class", "jid", "Fare", "Child", "cid"))
+#drops2 <- c(drop.common, c("tid", "fname", "Parch", "SibSp", "fid", "Family", "Pclass", "Servant.1", "Embarked"))
+
 print(sprintf("##### Benchmark KSVM #####"))
 #formula <- as.formula("Survived~SP*Fare*tid+ccat*cid+Gender")
 #formula <- as.formula("Survived~tid+SibSp+Parch+Age+Fare")
-ksvm.fit <- do.ksvm(train.df, test.df, drop.attrs, formula=formula)
-ksvm.fit <- do.ksvm(train.df, test.df, drop.attrs, formula=formula, testindex=testindex)
+#ksvm.fit <- do.ksvm(train.df, test.df, drop.attrs, formula=formula)
+#ksvm.fit <- do.ksvm(train.df, test.df, drop.attrs, formula=formula, testindex=testindex)
 
 print(sprintf("##### Benchmark RandomForest #####"))
 #formula <- as.formula("Survived~Pclass+Age*Family+Title+Gender+SP*Fare+tid+ccat*cid+Embarked")
 #formula <- as.formula("Survived~Pclass+Embarked+Child+W+Family+Title+ccat+cid+Gender")
-rf.fit <- do.rf(train.df, test.df, drop.attrs, formula=formula)
-rf.fit <- do.rf(train.df, test.df, drop.attrs, formula=formula, testindex=testindex)
+rf.fit <- do.rf(train.df, test.df, keep0, formula=formula)
+rf.fit <- do.rf(train.df, test.df, keep0, formula=formula, testindex=testindex)
+print(sprintf("##### Benchmark RandomForest, dd1 #####"))
+rf.fit1 <- do.rf(dd1, ddt1, keep1, formula=formula, fname="rf1")
+rf.fit1 <- do.rf(dd1, ddt1, keep1, formula=formula, fname="rf1", testindex=testindex1)
+print(sprintf("##### Benchmark RandomForest, dd2 #####"))
+rf.fit2 <- do.rf(dd2, ddt2, keep2, formula=formula, fname="rf2")
+rf.fit2 <- do.rf(dd2, ddt2, keep2, formula=formula, fname="rf2", testindex=testindex2)
+cmd <- "cat rf1_prediction.csv rf2_prediction.csv | sort -u -n > rf_merged.csv"
+system(cmd)
+cmd <- "cat rf1_prediction_test.csv rf2_prediction_test.csv | sort -u -n > rf_merged_test.csv"
+system(cmd)
 
 #par(mfrow=c(2,1))
 #hist(sdf$W, breaks=seq(0,1,0.1))
