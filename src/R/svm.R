@@ -2,10 +2,10 @@
 # clean-up session parameters
 #rm(list=ls())
 
-do.svm <- function(tdf, testdata, drops, fname="svm", testindex=NULL, printModel=FALSE) {
-    # drop requested attributes
-    if(!is.null(drops))
-        tdf <- drop(tdf, drops)
+do.svm <- function(tdf, testdata, keeps, fname="svm", testindex=NULL, printModel=FALSE) {
+    # keep requested attributes
+    if(!is.null(keeps))
+        tdf <- keep(tdf, keeps)
 
     train.df <- tdf
     test.df <- train.df

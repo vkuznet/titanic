@@ -2,12 +2,12 @@
 # clean-up session parameters
 #rm(list=ls())
 
-do.rf <- function(tdf, testdata, drops=NULL, fname="rf", mtry=NULL,
+do.rf <- function(tdf, testdata, keeps=NULL, fname="rf", mtry=NULL,
                     formula=NULL, testindex=NULL, printModel=FALSE) {
 
-    # drop requested attributes
-    if(!is.null(drops))
-        tdf <- drop(tdf, drops)
+    # keep requested attributes
+    if(!is.null(keeps))
+        tdf <- keep(tdf, keeps)
 
     train.df <- tdf
     test.df <- train.df

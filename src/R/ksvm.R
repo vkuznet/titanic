@@ -2,11 +2,11 @@
 # clean-up session parameters
 #rm(list=ls())
 
-do.ksvm <- function(tdf, testdata, drops=NULL, fname="ksvm", sigma=1, cost=1,
+do.ksvm <- function(tdf, testdata, keeps=NULL, fname="ksvm", sigma=1, cost=1,
                         formula=NULL, testindex=NULL, printModel=FALSE) {
-    # drop requested attributes
-    if(!is.null(drops))
-        tdf <- drop(tdf, drops)
+    # keep requested attributes
+    if(!is.null(keeps))
+        tdf <- keep(tdf, keeps)
 
     train.df <- tdf
     test.df <- train.df
