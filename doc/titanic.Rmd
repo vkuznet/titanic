@@ -60,7 +60,7 @@ attributes:
     Fig 4. Survival rate for Class and Sec attributes
 </div>
 
-Based on aforementioned plots we concluded that Age, Sex, Class are most powerful
+Based on aforementioned plots we concluded that Age, Sex, Class are the most powerful
 attributes. Below you can see a plot how they behave upon applying the cut:
 *age<18&class<3|sex=F&class<3|non-embarked*:
 
@@ -156,49 +156,91 @@ Root mean squared error                  0.3768
 - describe data cleaning, transformation
 - kaggle models
 
-### Part 3
+We investigated several options for model improvement:
+- scale Age and Fare attributes
+- merged Parch and SibSp attrubutes
+- performed data cleaning, i.e. assign missing Age values, by loading data
+  from external source (Titanica web site [2]) and perform matching based on
+  ticket and name attributes
+- introduced a new set of attributes such as, binary Child attribute, Ticket id,
+  cabin categories (A, B, C, D, etc.) as well as binary attribute for having a
+  cabin
+- we also performed K-means clustering for our data
 
-- multiple classifiers, different model settings
-- screen-shots
-- model strategy
-- model ensembles
-
-## Kaggle models
-
-The second submission was due to assignment of Age based on review of
-SibSp and Parch attributes as well as adding CabinId, TicketId variables. The later was
-just numerical values of Cabin and Ticket factors in R. For this submission we used
-R RandomForest implementation which scored almost 95% accuracy on the training set.
-At this step we jumped to position 2829 with score 0.77512:
+Based on Age assignment as well as cabin-id and ticket-id matching
+and using RandomForest ML algorithm
+we're able to reach position 2829 with score 0.77512
 <div id="container">
     <img class=center src=images/kaggle2.png />
 Fig 1. Kaggle submission 2.
 </div>
 
-Kaggle submission 3 and 4 were based on improvements with cabin assignment and
-matching ticket ids with cabin categories. At this stage we run in parallel R
-KSVM (with RBFKernel) and R RandomForest ML algorithms. Due to these changes we
-jumped up 2154 points in a leadership board with score 0.78947 and position 678:
+Further, we investigated various SVM models and use the one based on RBFKernel.
+We performed cabin-id/ticket-id assingments and were able to jump up
+2154 points in a leadership board with score 0.78947 and position 678:
 <div id="container">
     <img class=center src=images/kaggle3a.png />
 Fig 1. Kaggle score 3.
 </div>
 
-Kaggle submission 5, 6 and 7 were mostly fine-tuning of SVM and RandomForest models.
-They did not improve our final score.
-
-Kaggle submission 8 was based on introduction of new Married attributed, which
-was assigned as following: 1 for names with Miss. in them, 2 for Mrs., 3 for
-Mr.  and zero otherwise. The RF model shown an percentage improvement and we
-submit our results. On a leadership board we jumped up 1.435% to score 0.80383
-and position 145:
+Later we introduced a new Title attribute: Miss, Master, Mr, Mrs. This help us to improve
+our results by 1.435% and we jumped to score 0.80383 and position 145:
 
 <div id="container">
     <img class=center src=images/kaggle4.png />
 Fig 1. Kaggle score 4.
 </div>
 
+By adding clustering attribute (based on 7 clusters) we further improved our results by
+half of the percent up to 0.80861 and position 107:
+
+<div id="container">
+    <img class=center src=images/kaggle5.png />
+Fig 1. Kaggle score 5.
+</div>
+
+### Part 3
+
+We tried different classifiers, including BFTree, NaiveBayes, RandomForest, SMO,
+Stacking, AdaBoostM1, Voting and J48. Those were used in Weka, while we
+test as well SVM and RandomForest R implementations. We observed the overfiting
+problem with AdaBoostM1 and RandomForest which were able to classify data
+almost 100% on a training set, but had 80% success with 10-fold cross-validation.
+We confirmed that empirically by submitting our prediction to kaggle and observed that
+model based on full training set performed poorly with respect to ones based on
+10-fold cross validation. For instance, here is results from AdaBoostM1 classification:
+
+```
+===> run weka.AdaBoostM1.sh
+Correctly Classified Instances         891              100      %
+Kappa statistic                          1
+Correctly Classified Instances         712               79.9102 %
+Kappa statistic                          0.5635
+```
+
+The first numbers show that we're able to successfully prediction all cases using training
+set, while second number (79.9%) show very poor performance during cross-validation.
+
+Further trials with different attribute settings did not improve our results. Here is our
+three best submissions:
+
+<div id="container">
+    <img class=center src=images/kaggle_trial1.png />
+    <img class=center src=images/kaggle_trial2.png />
+    <img class=center src=images/kaggle_trial3.png />
+</div>
+
+The current position at leadership board is the following:
+<div id="container">
+    <img class=center src=images/kaggle_current.png />
+</div>
+
+
+## Kaggle models
+
+
 ## References
 
 1. The code for this assignment can be found at
    https://github.com/vkuznet/titanic
+2. Titanica web site: http://www.encyclopedia-titanica.org/
