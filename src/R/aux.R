@@ -35,15 +35,57 @@ process.titanica <- function(x) {
     function(x) {
         gsub("\\[", "", gsub("\\[", "", x))
     })
+    x$Crew <- sapply(x$Class,
+    function(x) {
+        x <- as.character(x)
+        if(x=="Engineering Crew") return(1)
+        else if(x=="Deck Crew") return(2)
+        else if(x=="Victualling Crew") return(3)
+        else if(x=="Restaurant Staff") return(4)
+        else if(x=="Victualling CrewPostal Clerk") return(5)
+        else return(0)
+    })
+    x$Servant.1 <- sapply(x$Class,
+    function(x) {
+        x <- as.character(x)
+        if(x=="1st Class PassengerServant") return(1)
+        else if(x=="1st Class PassengerH&W Guarantee Group") return(1)
+        else return(0)
+    })
+    x$Servant.2 <- sapply(x$Class,
+    function(x) {
+        x <- as.character(x)
+        if(x=="2nd Class PassengerServant") return(1)
+        else if(x=="2nd Class PassengerH&W Guarantee Group") return(1)
+        else return(0)
+    })
     x$Class <- sapply(x$Class,
     function(x) {
-        if(grepl("1st", x)==T) return(1)
-        else if(grepl("2nd", x)==T) return(2)
-        else if(grepl("3rd", x)==T) return(3)
-        else if(grepl("Crew", x)==T) return(4)
-        else if(grepl("Staff", x)==T) return(5)
-        else return(6)
+        x <- as.character(x)
+        if(x=="1st Class Passenger") return(1)
+        else if(x=="2nd Class Passenger") return(2)
+        else if(x=="3rd Class Passenger") return(3)
+        else if(x=="Engineering Crew") return(4)
+        else if(x=="Deck Crew") return(5)
+        else if(x=="Victualling Crew") return(6)
+        else if(x=="1st Class PassengerServant") return(7)
+        else if(x=="Restaurant Staff") return(8)
+        else if(x=="2nd Class PassengerServant") return(9)
+        else if(x=="1st Class PassengerH&W Guarantee Group") return(10)
+        else if(x=="2nd Class PassengerMusician") return(11)
+        else if(x=="2nd Class PassengerH&W Guarantee Group") return(12)
+        else if(x=="Victualling CrewPostal Clerk") return(13)
+        else return(14)
     })
+#    x$Pclass <- sapply(x$Class,
+#    function(x) {
+#        if(grepl("1st", x)==T) return(1)
+#        else if(grepl("2nd", x)==T) return(2)
+#        else if(grepl("3rd", x)==T) return(3)
+#        else if(grepl("Crew", x)==T) return(4)
+#        else if(grepl("Staff", x)==T) return(5)
+#        else return(5)
+#    })
     x$T <- sapply(x$Ticket,
     function(x) {
         if(is.na(x) | as.character(x)=="" | as.character(x)=="NA") return(0)
@@ -87,27 +129,24 @@ read.victims <- function() {
 assign.jid <- function(xdf, jobs) {
     job <- as.character(xdf$Job)
     jid <- which(jobs==job)
-    return (as.integer(jid)) 
+    return (as.integer(jid)-1) 
 }
 
 # helper function to adjust titanica data to the form suitable for my analysis
 aux.data <- function() {
     survivors <- read.survivors()
     victims <- read.victims()
-#    f.names <- unique(c(survivors$fname, victims$fname))
     job.1 <- sapply(survivors$Job, function(x) {as.character(x)})
     job.2 <- sapply(victims$Job, function(x) {as.character(x)})
     f.jobs <- unique(c(job.1, job.2))
     ndf <- data.frame()
     for(i in 1:nrow(survivors)) {
         row <- survivors[i,]
-#        row$fid <- assign.fid(row, f.names)
         row$jid <- assign.jid(row, f.jobs)
         ndf <- rbind(ndf, row)
     }
     for(i in 1:nrow(victims)) {
         row <- victims[i,]
-#        row$fid <- assign.fid(row, f.names)
         row$jid <- assign.jid(row, f.jobs)
         ndf <- rbind(ndf, row)
     }
@@ -126,33 +165,38 @@ merge.with.aux <- function(adf, xdf) {
         if(length(nid1)==1) {
             arow <- adf[nid1,]
             xrow$jid <- arow$jid
-#            xrow$fid <- arow$fid
             # override Age, Emabarked and Pclass
-#            if(is.na(xrow$Age))
+            if(is.na(xrow$Age)) {
+#                print(sprintf("Assign age: %s, %s, %s", xrow$Name, arow$Name, arow$Age))
                 xrow$Age <- arow$Age
+            }
         } else if(length(nid2)==1) {
             arow <- adf[nid2,]
             # add job and family ids
             xrow$jid <- arow$jid
-#            xrow$fid <- arow$fid
             # override Age, Emabarked and Pclass
-#            if(is.na(xrow$Age))
+            if(is.na(xrow$Age)) {
+#                print(sprintf("Assign age: %s, %s, %s", xrow$Name, arow$Name, arow$Age))
                 xrow$Age <- arow$Age
+            }
         } else if(length(nid3)==1) {
             arow <- adf[nid3,]
             # add job and family ids
             xrow$jid <- arow$jid
-#            xrow$fid <- arow$fid
             # override Age, Emabarked and Pclass
-#            if(is.na(xrow$Age))
+            if(is.na(xrow$Age)) {
+#                print(sprintf("Assign age: %s, %s, %s", xrow$Name, arow$Name, arow$Age))
                 xrow$Age <- arow$Age
+            }
         } else {
             print(sprintf("Non-identified: %s", as.character(xrow$Name)))
             xrow$jid <- 0
-#            xrow$fid <- 0
         }
         xrow$Embarked <- arow$Embarked
-        xrow$Pclass <- arow$Class
+        xrow$Class <- arow$Class
+#        xrow$Crew <- arow$Crew
+        xrow$Servant.1 <- arow$Servant.1
+        xrow$Servant.2 <- arow$Servant.2
         ndf <- rbind(ndf, xrow)
     }
     return(ndf)
