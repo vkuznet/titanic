@@ -34,6 +34,8 @@ process.titanica <- function(x) {
     x$Boat <- sapply(x$Boat,
     function(x) {
         gsub("\\[", "", gsub("\\[", "", x))
+        gsub("\\]", "", gsub("\\]", "", x))
+        return(x)
     })
     x$Crew <- sapply(x$Class,
     function(x) {
@@ -129,7 +131,8 @@ read.victims <- function() {
 assign.jid <- function(xdf, jobs) {
     job <- as.character(xdf$Job)
     jid <- which(jobs==job)
-    return (as.integer(jid)-1) 
+    jid <- as.integer(jid)
+    return (as.integer(jid)) 
 }
 
 # helper function to adjust titanica data to the form suitable for my analysis
@@ -197,6 +200,8 @@ merge.with.aux <- function(adf, xdf) {
 #        xrow$Crew <- arow$Crew
         xrow$Servant.1 <- arow$Servant.1
         xrow$Servant.2 <- arow$Servant.2
+        xrow$Boat <- arow$Boat
+        xrow$fname <- arow$fname
         ndf <- rbind(ndf, xrow)
     }
     return(ndf)
