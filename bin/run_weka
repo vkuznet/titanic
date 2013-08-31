@@ -76,7 +76,6 @@ mkdir -p $odir
 
 # files to be used
 mfile=$odir/$model.model
-tfile=$idir/data/test.csv
 pfile=$odir/prediction.txt
 
 if [ "$action" == "help" ]; then
