@@ -2,7 +2,7 @@
 # clean-up session parameters
 #rm(list=ls())
 
-do.svm <- function(tdf, testdata, keeps, fname="svm", testindex=NULL, printModel=FALSE) {
+do.svm <- function(tdf, testdata, keeps, fname="svm", formula=NULL, testindex=NULL, printModel=FALSE) {
     # keep requested attributes
     if(!is.null(keeps))
         tdf <- keep(tdf, keeps)
@@ -11,7 +11,7 @@ do.svm <- function(tdf, testdata, keeps, fname="svm", testindex=NULL, printModel
     test.df <- train.df
     # use 70/30 splitting
     if (is.null(testindex)) {
-        print(sprintf("Run KSVM, use full training set"))
+        print(sprintf("Run SVM, use full training set"))
         survived <- train.df$Survived
         pids <- train.df$PassengerId
     } else {
@@ -21,7 +21,7 @@ do.svm <- function(tdf, testdata, keeps, fname="svm", testindex=NULL, printModel
         test.df <- testset
         survived <- testset$Survived
         pids <- testset$PassengerId
-        print(sprintf("Run KSVM, train %d, test %d", nrow(trainset), nrow(testset)))
+        print(sprintf("Run SVM, train %d, test %d", nrow(trainset), nrow(testset)))
     }
 
     # exclude id/PassengerId columns to work with ML
@@ -48,15 +48,13 @@ do.svm <- function(tdf, testdata, keeps, fname="svm", testindex=NULL, printModel
 
     # print confugtion matrix
     if(!is.null(testindex)) {
-        conf.matrix(survived, svm.pred, printTable=T)
-        mdf <- misclassified(test.df.copy, svm.pred)
+        pfile <- sprintf("%s_prediction_test.csv", fname)
+#        mdf <- misclassified(test.df.copy, svm.pred)
     } else {
-        # write out prediction
         pfile <- sprintf("%s_prediction.csv", fname)
-        write.prediction(svm.model, testdata, pfile)
-
-        conf.matrix(survived, svm.pred, printTable=F)
     }
+    write.prediction(svm.model, testdata, pfile)
+    conf.matrix(survived, svm.pred, printTable=F)
 
     return(int.pred(svm.pred))
 }

@@ -57,15 +57,13 @@ do.ksvm <- function(tdf, testdata, keeps=NULL, fname="ksvm", sigma=1, cost=1,
 
     # print confugtion matrix
     if(!is.null(testindex)) {
-        conf.matrix(survived, ksvm.pred, printTable=T)
+        pfile <- sprintf("%s_prediction_test.csv", fname)
 #        mdf <- misclassified(test.df.copy, ksvm.pred)
     } else {
-        # write out prediction
         pfile <- sprintf("%s_prediction.csv", fname)
-        write.prediction(ksvm.model, testdata, pfile)
-
-        conf.matrix(survived, ksvm.pred, printTable=F)
     }
+    write.prediction(ksvm.model, testdata, pfile)
+    conf.matrix(survived, ksvm.pred, printTable=F)
 
     return(int.pred(ksvm.pred))
 }
