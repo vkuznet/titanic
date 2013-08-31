@@ -59,6 +59,22 @@ cabins.1 <- sapply(train.data$Cabin, function(x) {as.character(x)})
 cabins.2 <- sapply(test.data$Cabin, function(x) {as.character(x)})
 cabins <- unique(c(cabins.1, cabins.2))
 
+# survival cabins
+sdf <- subset(train.data, train.data$Survived==1)
+sur.cabins <- unlist(sapply(unique(sdf$Cabin), function(x) {if(as.character(x)!="") return(as.character(x))}))
+#print(sprintf("Survival cabins"))
+#print(sort(sur.cabins))
+
+# survival jid
+sur.jids <- unique(sdf$jid)
+#print(sprintf("Survival jid"))
+#print(sort(sur.jids))
+
+# survival snames
+sur.fnames <- unique(sdf$fname)
+#print(sprintf("Survival names"))
+#print(sort(sur.fnames))
+
 # always set a seed
 set.seed(12345)
 
@@ -83,10 +99,13 @@ adjust.data <- function(x, debug=F) {
         row$Embarked <- assign.eid(row)
         row$ccat <- cabin.category(row) # run after assigned tid
         row$cid <- assign.cid(row, cabins)
+        row$jid.full <- row$jid
+        row$scid <- assign.scid(row, sur.cabins)
         row$Fare <- assign.fare(row)
         row$Gender <- assign.gender(row)
         row$fid <- assign.fid(row, f.names)
         row$Fbin <- assign.bin(row, "Fare", c(0, 10, 30, 100))
+        row$sn <- assign.sfname(row, sur.fnames)
         if (debug == T) {
             print(row)
         }
@@ -94,15 +113,18 @@ adjust.data <- function(x, debug=F) {
     }
     for(i in 1:nrow(ndf)) {
         row <- ndf[i,]
+        adult.age <- runif(1, age.thr+1, max(ndf$Age, na.rm=T))
+        kid.age <- runif(1, 0, age.thr-1)
         row$Age <- assign.age(ndf, row, adult.age, kid.age)
         row$Child <- assign.child(row, age.thr) # run after Parch/SibSp/Age
-#        row$W <- assign.weigth(row, age.thr) # run after we assign age
+        row$W <- assign.weigth(row, age.thr) # run after we assign age
         row$SW <- assign.SW(row, digi.tickets)
         ndf[i,] <- row
     }
 #    ndf$Fare <- scale(ndf$Fare)
 #    ndf$Age <- scale(ndf$Age)
     ndf$fname <- as.integer(as.factor(ndf$fname))
+    ndf$jid <- sapply(ndf$jid, function(x) {if(length(which(sur.jids==x))>0) return(1) else return(0)})
     return(ndf)
 }
 
@@ -162,6 +184,8 @@ drop.attrs <- c("id", "Ticket", "Name", "Sex", "Cabin", "Fbin", "W", "sname", "t
 keep0 <- c("PassengerId", "Survived", "Pclass", "Age", "SibSp", "Parch", "Fare",
             "Embarked", "T", "jid", "Class", "Servant.1", "Servant.2", "Child", "SW",
             "Title", "ccat", "cid", "fid")
+keep0 <- c("PassengerId", "Survived", "Pclass", "Age", "SibSp", "Parch", "Fare", "Embarked", "T", "jid", "Class", "Servant.1", "Servant.2", "Title", "scid")
+keep0 <- c("PassengerId", "Survived", "Pclass", "Age", "SP", "Fare", "Embarked", "jid", "Class", "Title", "scid")
 print(sprintf("Keep attributes"))
 print(keep0)
 
@@ -219,37 +243,54 @@ dd1 <- subset(train.df, train.df$Pclass==1)
 ddt1 <- subset(test.df, test.df$Pclass==1)
 index1 <- 1:nrow(dd1)
 testindex1 <- sample(index1, trunc(length(index1)/3))
-dd2 <- subset(train.df, train.df$Pclass!=1)
-ddt2 <- subset(test.df, test.df$Pclass!=1)
+
+dd2 <- subset(train.df, train.df$Pclass==2)
+ddt2 <- subset(test.df, test.df$Pclass==2)
 index2 <- 2:nrow(dd2)
 testindex2 <- sample(index2, trunc(length(index2)/3))
-keep1 <- c("PassengerId", "Survived", "Age", "T", "Title", "Gender", "ccat")
-keep2 <- c("PassengerId", "Survived", "Fare", "T", "jid", "Class", "Servant.2", "SP", "Child", "SW", "Title", "ccat", "cid", "Gender")
+
+dd3 <- subset(train.df, train.df$Pclass==3)
+ddt3 <- subset(test.df, test.df$Pclass==3)
+index3 <- 3:nrow(dd3)
+testindex3 <- sample(index3, trunc(length(index3)/3))
+
+keep1 <- c("PassengerId", "Survived", "Age", "Title", "Gender", "scid", "sn")
+keep1 <- c("PassengerId", "Survived", "Title", "Gender", "scid", "sn")
+keep2 <- c("PassengerId", "Survived", "Age", "Title", "Gender", "scid", "jid", "sn")
+keep3 <- c("PassengerId", "Survived", "Age", "Title", "Gender", "SP", "Embarked", "Fare", "scid", "T", "jid", "sn")
 
 #drop.common <- c("id", "Ticket", "Name", "Sex", "Cabin", "Fbin", "W", "sname")
 #drops1 <- c(drop.common, c("tid", "fname", "Parch", "SibSp", "fid", "Family", "Pclass", "Servant.2", "Servant.1", "Embarked", "T", "Class", "SW", "ccat", "Fare", "ccat", "SP", "Class", "jid", "Fare", "Child", "cid"))
 #drops2 <- c(drop.common, c("tid", "fname", "Parch", "SibSp", "fid", "Family", "Pclass", "Servant.1", "Embarked"))
 
 print(sprintf("##### Benchmark KSVM #####"))
+print(keep0)
 #formula <- as.formula("Survived~SP*Fare*tid+ccat*cid+Gender")
 #formula <- as.formula("Survived~tid+SibSp+Parch+Age+Fare")
-#ksvm.fit <- do.ksvm(train.df, test.df, drop.attrs, formula=formula)
-#ksvm.fit <- do.ksvm(train.df, test.df, drop.attrs, formula=formula, testindex=testindex)
+ksvm.fit <- do.ksvm(train.df, test.df, keep0, formula=formula)
+ksvm.fit <- do.ksvm(train.df, test.df, keep0, formula=formula, testindex=testindex)
 
 print(sprintf("##### Benchmark RandomForest #####"))
+print(keep0)
 #formula <- as.formula("Survived~Pclass+Age*Family+Title+Gender+SP*Fare+tid+ccat*cid+Embarked")
 #formula <- as.formula("Survived~Pclass+Embarked+Child+W+Family+Title+ccat+cid+Gender")
 rf.fit <- do.rf(train.df, test.df, keep0, formula=formula)
 rf.fit <- do.rf(train.df, test.df, keep0, formula=formula, testindex=testindex)
 print(sprintf("##### Benchmark RandomForest, dd1 #####"))
+print(keep1)
 rf.fit1 <- do.rf(dd1, ddt1, keep1, formula=formula, fname="rf1")
-rf.fit1 <- do.rf(dd1, ddt1, keep1, formula=formula, fname="rf1", testindex=testindex1)
+rf.fit1 <- do.rf(dd1, ddt1, keep1, formula=formula, fname="rf1", testindex=testindex1, printModel=T)
 print(sprintf("##### Benchmark RandomForest, dd2 #####"))
+print(keep2)
 rf.fit2 <- do.rf(dd2, ddt2, keep2, formula=formula, fname="rf2")
-rf.fit2 <- do.rf(dd2, ddt2, keep2, formula=formula, fname="rf2", testindex=testindex2)
-cmd <- "cat rf1_prediction.csv rf2_prediction.csv | sort -u -n > rf_merged.csv"
+rf.fit2 <- do.rf(dd2, ddt2, keep2, formula=formula, fname="rf2", testindex=testindex2, printModel=T)
+print(sprintf("##### Benchmark RandomForest, dd3 #####"))
+print(keep3)
+rf.fit3 <- do.rf(dd3, ddt3, keep3, formula=formula, fname="rf3")
+rf.fit3 <- do.rf(dd3, ddt3, keep3, formula=formula, fname="rf3", testindex=testindex3, printModel=T)
+cmd <- "cat rf[1-3]_prediction.csv | sort -u -n > rf_merged.csv"
 system(cmd)
-cmd <- "cat rf1_prediction_test.csv rf2_prediction_test.csv | sort -u -n > rf_merged_test.csv"
+cmd <- "cat rf[1-3]_prediction_test.csv | sort -u -n > rf_merged_test.csv"
 system(cmd)
 
 #par(mfrow=c(2,1))
