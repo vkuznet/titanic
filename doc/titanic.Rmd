@@ -12,9 +12,9 @@ Predict survival on the Titanic
 We used all available tools for this data analysis, including R, Weka, Python.
 The data clean-up and preparation was done in R, the modeling was done both in R and Weka.
 The bash shell scripts and python were used for batching purposes. We also used
-github for code repository and management [1].
+github for code repository and data management [1].
 
-The team **valya** was registered by one of us (V. Kuznetsov) under the kaggle web site:
+The team **valya** was registered by one of us (V. Kuznetsov) on the kaggle web site:
 
 <div id="container">
     <img class=center src=images/kaggle_team.png />
@@ -31,7 +31,7 @@ This section covers model description, including:
 - compare with multiple classifiers
 - kaggle model
 
-We started from data exploration by plotting various attributes from provided
+We started from the data exploration by plotting various attributes from provided
 data set. The most interested plots are shown below:
 
 <div id="container">
@@ -43,6 +43,15 @@ The mosaic plot, see Fig 1, clearly indicated that survival rate significantly
 increases for females and children.  Most survived children were in 2nd and 3rd
 class, while females from the first and second classes had better change to
 survive with only half of them survived from the third class.
+
+It was also useful to look at mosaic plot of cabin, fare, embarked attributes:
+<div id="container">
+    <img class=center src=images/mosaic2.png />
+    Fig 1. Mosaic plot of survival rate for Cabin, Fare and Embarked attributes.
+</div>
+
+Here we binned Fare attribute as Low (<10), Medium (10-50) and High(>50) as well
+as assigned binary attribute for having a Cabin.
 
 Then we looked at different class distributions. Here is class vs SibSp and Parch
 attributes:
@@ -58,7 +67,7 @@ attributes:
 
 <div id="container">
     <img class=center src=images/class_plots3.png />
-    Fig 4. Survival rate for Class and Sec attributes
+    Fig 4. Survival rate for Class and Sex attributes
 </div>
 
 Based on aforementioned plots we concluded that Age, Sex, Class attributes are
@@ -91,8 +100,8 @@ AdaBoostM1, etc. Here their initial benchmarks:
 ---------------------------------------------------------------------------------------------
 ```
 
-The first row shows results based on a training set, while second the 10-fold
-cross-validation.
+The first row shows results based on a training set, while second corresponds to results
+from 10-fold cross-validation output.
 
 The initial submission was made using Weka RandomForest model. We received
 0.73206 score with position 5780:
@@ -182,7 +191,7 @@ three best submissions:
     <img class=center src=images/kaggle_trial3.png />
 </div>
 
-The current position at leadership board is the following:
+The current position on a leadership board is the following:
 <div id="container">
     <img class=center src=images/kaggle_current.png />
 </div>
