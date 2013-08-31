@@ -75,6 +75,11 @@ sur.fnames <- unique(sdf$fname)
 #print(sprintf("Survival names"))
 #print(sort(sur.fnames))
 
+# survival tickets
+sur.tickets <- unique(sdf$T)
+#print(sprintf("Survival tickets"))
+#print(sort(sur.tickets))
+
 # always set a seed
 set.seed(12345)
 
@@ -106,6 +111,7 @@ adjust.data <- function(x, debug=F) {
         row$fid <- assign.fid(row, f.names)
         row$Fbin <- assign.bin(row, "Fare", c(0, 10, 30, 100))
         row$sn <- assign.sfname(row, sur.fnames)
+        row$st <- assign.sticket(row, sur.tickets)
         if (debug == T) {
             print(row)
         }
@@ -186,6 +192,7 @@ keep0 <- c("PassengerId", "Survived", "Pclass", "Age", "SibSp", "Parch", "Fare",
             "Title", "ccat", "cid", "fid")
 keep0 <- c("PassengerId", "Survived", "Pclass", "Age", "SibSp", "Parch", "Fare", "Embarked", "T", "jid", "Class", "Servant.1", "Servant.2", "Title", "scid")
 keep0 <- c("PassengerId", "Survived", "Pclass", "Age", "SP", "Fare", "Embarked", "jid", "Class", "Title", "scid")
+keep0 <- c("PassengerId", "Survived", "Age", "Title", "Gender", "Pclass", "T", "SP", "Fare", "st")
 print(sprintf("Keep attributes"))
 print(keep0)
 
@@ -268,30 +275,31 @@ print(keep0)
 #formula <- as.formula("Survived~SP*Fare*tid+ccat*cid+Gender")
 #formula <- as.formula("Survived~tid+SibSp+Parch+Age+Fare")
 ksvm.fit <- do.ksvm(train.df, test.df, keep0, formula=formula)
-ksvm.fit <- do.ksvm(train.df, test.df, keep0, formula=formula, testindex=testindex)
+ksvm.fit <- do.ksvm(train.df, test.df, keep0, formula=formula, testindex=testindex, printModel=T)
 
 print(sprintf("##### Benchmark RandomForest #####"))
 print(keep0)
 #formula <- as.formula("Survived~Pclass+Age*Family+Title+Gender+SP*Fare+tid+ccat*cid+Embarked")
 #formula <- as.formula("Survived~Pclass+Embarked+Child+W+Family+Title+ccat+cid+Gender")
 rf.fit <- do.rf(train.df, test.df, keep0, formula=formula)
-rf.fit <- do.rf(train.df, test.df, keep0, formula=formula, testindex=testindex)
-print(sprintf("##### Benchmark RandomForest, dd1 #####"))
-print(keep1)
-rf.fit1 <- do.rf(dd1, ddt1, keep1, formula=formula, fname="rf1")
-rf.fit1 <- do.rf(dd1, ddt1, keep1, formula=formula, fname="rf1", testindex=testindex1, printModel=T)
-print(sprintf("##### Benchmark RandomForest, dd2 #####"))
-print(keep2)
-rf.fit2 <- do.rf(dd2, ddt2, keep2, formula=formula, fname="rf2")
-rf.fit2 <- do.rf(dd2, ddt2, keep2, formula=formula, fname="rf2", testindex=testindex2, printModel=T)
-print(sprintf("##### Benchmark RandomForest, dd3 #####"))
-print(keep3)
-rf.fit3 <- do.rf(dd3, ddt3, keep3, formula=formula, fname="rf3")
-rf.fit3 <- do.rf(dd3, ddt3, keep3, formula=formula, fname="rf3", testindex=testindex3, printModel=T)
-cmd <- "cat rf[1-3]_prediction.csv | sort -u -n > rf_merged.csv"
-system(cmd)
-cmd <- "cat rf[1-3]_prediction_test.csv | sort -u -n > rf_merged_test.csv"
-system(cmd)
+rf.fit <- do.rf(train.df, test.df, keep0, formula=formula, testindex=testindex, printModel=T)
+
+#print(sprintf("##### Benchmark RandomForest, dd1 #####"))
+#print(keep1)
+#rf.fit1 <- do.rf(dd1, ddt1, keep1, formula=formula, fname="rf1")
+#rf.fit1 <- do.rf(dd1, ddt1, keep1, formula=formula, fname="rf1", testindex=testindex1, printModel=T)
+#print(sprintf("##### Benchmark RandomForest, dd2 #####"))
+#print(keep2)
+#rf.fit2 <- do.rf(dd2, ddt2, keep2, formula=formula, fname="rf2")
+#rf.fit2 <- do.rf(dd2, ddt2, keep2, formula=formula, fname="rf2", testindex=testindex2, printModel=T)
+#print(sprintf("##### Benchmark RandomForest, dd3 #####"))
+#print(keep3)
+#rf.fit3 <- do.rf(dd3, ddt3, keep3, formula=formula, fname="rf3")
+#rf.fit3 <- do.rf(dd3, ddt3, keep3, formula=formula, fname="rf3", testindex=testindex3, printModel=T)
+#cmd <- "cat rf[1-3]_prediction.csv | sort -u -n > rf_merged.csv"
+#system(cmd)
+#cmd <- "cat rf[1-3]_prediction_test.csv | sort -u -n > rf_merged_test.csv"
+#system(cmd)
 
 #par(mfrow=c(2,1))
 #hist(sdf$W, breaks=seq(0,1,0.1))
