@@ -234,6 +234,7 @@ ndf <- subset(real.train.df, real.train.df$Survived==0)
 write.model(train.df, drop.attrs)
 
 # Run R ML algorithms
+source("src/R/svm.R")
 source("src/R/ksvm.R")
 source("src/R/rf.R")
 source("src/R/nnet.R")
