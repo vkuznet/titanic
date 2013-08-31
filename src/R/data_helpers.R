@@ -111,6 +111,32 @@ assign.tid <- function(r, tickets) {
     return (which(tickets==as.character(t)))
 }
 
+# helper function to assign survival cabin id
+assign.scid <- function(r, sur.cabins) {
+    cabin <- as.character(r$Cabin)
+    res <- which(sur.cabins==cabin)
+    if(length(res)>0) return(1)
+    else return(0)
+}
+# helper function to assign survival job id
+assign.jid <- function(r, sur.jids) {
+    print(r)
+    if(is.na(r$jid)) return(0)
+    res <- which(sur.jids==r$jid)
+    if(length(res)>0) return(1)
+    else return(0)
+}
+# helper function to assign survival family name
+assign.sfname <- function(r, sur.fnames) {
+    fname <- unlist(strsplit(as.character(r$Name), ","))[1]
+    fname <- tolower(fname)
+    fname <- capitalize(fname)
+    res <- which(sur.fnames==fname)
+    if(length(res)>0) return(1)
+    else return(0)
+}
+
+
 # helper function to assign cabin id
 assign.cid <- function(r, cabins) {
     t <- r$Cabin
@@ -121,17 +147,17 @@ assign.cid <- function(r, cabins) {
 
 # helper function to adjust Parch
 adjust.Parch <- function(r) {
-#    if(r$Parch>3) {
-#        r$Parch <- 3
-#    }
+    if(r$Parch>3) {
+        r$Parch <- 3
+    }
     return(r$Parch)
 }
 
 # helper function to adjust SibSp
 adjust.SibSp <- function(r) {
-#    if(r$SibSp>3) {
-#        r$SibSp <- 3
-#    }
+    if(r$SibSp>3) {
+        r$SibSp <- 3
+    }
     return(r$SibSp)
 }
 
@@ -269,18 +295,19 @@ assign.family <- function(r) {
 
 # helper function to assign Title
 # make new Title category: 1-Miss, 2-Mrs, 3-Mr, 4-Dr, 0-otherwise
+# 1-Miss or Mrs, 2-Mr, 3-Master
 assign.title <- function(r) {
     title <- 0
     if(isMiss(r$Name)) {
         title <- 1
     } else if(isMrs(r$Name)) {
-        title <- 2
+        title <- 1
     } else if(isMr(r$Name)) {
-        title <- 3
+        title <- 2
     } else if(isMaster(r$Name)) {
-        title <- 4
+        title <- 3
     } else {
-        title <- 0
+        title <- 2 # was zero
     }
     return(title)
 }
@@ -466,23 +493,27 @@ adjust.family <- function(x) {
     return (d)
 }
 
-write.model <- function(xdf, drops=NULL) {
+write.model <- function(xdf, drops=NULL, keeps=NULL, fname="model") {
 
     # drop requested attributes
     if(!is.null(drops))
         train.df <- drop(xdf, drops)
+    else if(!is.null(keeps))
+        train.df <- keep(xdf, keeps)
     else 
         train.df <- xdf
 
     # write data out for SVM
-    print(sprintf("Write model.csv"))
-    write.csv(train.df, file="model.csv")
+    f.csv <- sprintf("%s.csv", fname)
+    print(sprintf("Write %s", f.csv))
+    write.csv(train.df, file=f.csv)
     cmd="cat model.csv | sed 's/\"\"/\"id\"/g' > t.csv; mv -f t.csv model.csv"
     system(cmd)
 
     # write data in arff format for Weka
-    print(sprintf("Write model.arff"))
-    write.arff(train.df, file="model.arff")
+    f.arff <- sprintf("%s.arff", fname)
+    print(sprintf("Write %s", f.arff))
+    write.arff(train.df, file=f.arff)
     cmd="cat model.arff  | sed \"s/Survived numeric/Survived {0,1}/g\" > t.arff; mv -f t.arff model.arff"
     system(cmd)
     # write test data in arff format
