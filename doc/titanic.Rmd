@@ -11,7 +11,8 @@ Predict survival on the Titanic
 
 We used all available tools for this data analysis, including R, Weka, Python.
 The data clean-up and preparation was done in R, the modeling was done both in R and Weka.
-The bash shell scripts and python were used for batching purposes (see later).
+The bash shell scripts and python were used for batching purposes. We also used
+github for code repository and management [1].
 
 The team **valya** was registered by one of us (V. Kuznetsov) under the kaggle web site:
 
@@ -22,7 +23,7 @@ The team **valya** was registered by one of us (V. Kuznetsov) under the kaggle w
 
 ### Part 1
 
-In section we cover model description, answering the following questions:
+This section covers model description, including:
 
 - what feature looks most promising for modeling
 - do you need to deal with missing values?
@@ -38,10 +39,10 @@ data set. The most interested plots are shown below:
     Fig 1. Mosaic plot of survival rate for Class, Sex and Age attributes.
 </div>
 
-The data survival rate plot, see Fig 1, clearly indicated that
-survival rate increases significantly for females and children.
-Most children were in 2nd and 3rd class. Most females in first and second
-classes, while only half of them survived from the third class.
+The mosaic plot, see Fig 1, clearly indicated that survival rate significantly
+increases for females and children.  Most survived children were in 2nd and 3rd
+class, while females from the first and second classes had better change to
+survive with only half of them survived from the third class.
 
 Then we looked at different class distributions. Here is class vs SibSp and Parch
 attributes:
@@ -60,9 +61,9 @@ attributes:
     Fig 4. Survival rate for Class and Sec attributes
 </div>
 
-Based on aforementioned plots we concluded that Age, Sex, Class are the most powerful
-attributes. Below you can see a plot how they behave upon applying the cut:
-*age<18&class<3|sex=F&class<3|non-embarked*:
+Based on aforementioned plots we concluded that Age, Sex, Class attributes are
+the most powerful attributes. Below you can see a plot how survival rate changes
+when we apply the following cut: *age<18&class<3|sex=F&class<3|non-embarked*:
 
 <div id="container">
     <img class=center src=images/class_plots4.png />
@@ -81,48 +82,17 @@ We run multiple Weka ML algorithms, including NaiveBayes, J48, RandomForest, SMO
 AdaBoostM1, etc. Here their initial benchmarks:
 
 ```
-===> run weka.NaiveBayes.sh
-Correctly Classified Instances         688               77.2166 %
-Kappa statistic                          0.4917
-Correctly Classified Instances         687               77.1044 %
-Kappa statistic                          0.4889
-
-===> run weka.j48.sh
-Correctly Classified Instances         779               87.4299 %
-Kappa statistic                          0.7245
-Correctly Classified Instances         716               80.3591 %
-Kappa statistic                          0.5761
-
-===> run weka.RandomForest.sh
-Correctly Classified Instances         871               97.7553 %
-Kappa statistic                          0.9522
-Correctly Classified Instances         717               80.4714 %
-Kappa statistic                          0.5764
-
-===> run weka.BFTree.sh
-Correctly Classified Instances         722               81.0325 %
-Kappa statistic                          0.5865
-Correctly Classified Instances         709               79.5735 %
-Kappa statistic                          0.5569
-
-===> run weka.SMO.sh
-Correctly Classified Instances         701               78.6756 %
-Kappa statistic                          0.5421
-Correctly Classified Instances         701               78.6756 %
-Kappa statistic                          0.5421
-
-===> run weka.Vote.sh
-Correctly Classified Instances         723               81.1448 %
-Kappa statistic                          0.5901
-Correctly Classified Instances         708               79.4613 %
-Kappa statistic                          0.5572
-
-===> run weka.AdaBoostM1.sh
-Correctly Classified Instances         891              100      %
-Kappa statistic                          1
-Correctly Classified Instances         712               79.9102 %
-Kappa statistic                          0.5635
+---------------------------------------------------------------------------------------------
+| NaiveBayes | j48        | RandomForest | BFTree     | SMO       | Vote       | AdaBoostM1 |
+---------------------------------------------------------------------------------------------
+| 77% (0.49) | 87% (0.72) | 97% (0.95)   | 81% (0.58) | 78 (0.54) | 81% (0.59) | 100% (1)   |
+---------------------------------------------------------------------------------------------
+| 77% (0.49) | 80% (0.57) | 80% (0.57)   | 79% (0.55) | 78 (0.54) | 79% (0.55) | 79% (0.56) |
+---------------------------------------------------------------------------------------------
 ```
+
+The first row shows results based on a training set, while second the 10-fold
+cross-validation.
 
 The initial submission was made using Weka RandomForest model. We received
 0.73206 score with position 5780:
@@ -131,21 +101,12 @@ The initial submission was made using Weka RandomForest model. We received
     Kaggle submission 1.
 </div>
 
-It gave the following classification:
-
-```
-Correctly Classified Instances         890               99.8878 %
-Incorrectly Classified Instances         1                0.1122 %
-Root mean squared error                  0.142
-
-while with cross-validation it had
-
-Correctly Classified Instances         725               81.3692 %
-Incorrectly Classified Instances       166               18.6308 %
-Root mean squared error                  0.3768
-```
+It had the following classification: 99.8%/81.4% for training and cross-validation
+outputs.
 
 ### Part 2
+
+This section describes model improvements and various features selections, including:
 
 - model improvement
   - missing values
@@ -156,39 +117,38 @@ Root mean squared error                  0.3768
 - describe data cleaning, transformation
 - kaggle models
 
-We investigated several options for model improvement:
+We investigated several options to improve our model:
 - scale Age and Fare attributes
-- merged Parch and SibSp attrubutes
-- performed data cleaning, i.e. assign missing Age values, by loading data
+- merged Parch and SibSp attributes
+- data cleaning with assigning missing Age values by loading data
   from external source (Titanica web site [2]) and perform matching based on
   ticket and name attributes
-- introduced a new set of attributes such as, binary Child attribute, Ticket id,
+- exploring new set of attributes such as, binary Child attribute, Ticket id,
   cabin categories (A, B, C, D, etc.) as well as binary attribute for having a
   cabin
 - we also performed K-means clustering for our data
 
-Based on Age assignment as well as cabin-id and ticket-id matching
-and using RandomForest ML algorithm
-we're able to reach position 2829 with score 0.77512
+Based on Age assignment as well as cabin-id and ticket-id matching and using
+RandomForest ML algorithm we're able to reach position 2829 with score 0.77512
 <div id="container">
     <img class=center src=images/kaggle2.png />
-Fig 1. Kaggle submission 2.
+Kaggle submission 2.
 </div>
 
 Further, we investigated various SVM models and use the one based on RBFKernel.
-We performed cabin-id/ticket-id assingments and were able to jump up
-2154 points in a leadership board with score 0.78947 and position 678:
+We performed cabin-id/ticket-id assignment and were able to jump up
+2154 points in a leadership board with a score 0.78947 and position 678:
 <div id="container">
     <img class=center src=images/kaggle3a.png />
-Fig 1. Kaggle score 3.
+Kaggle score 3.
 </div>
 
-Later we introduced a new Title attribute: Miss, Master, Mr, Mrs. This help us to improve
-our results by 1.435% and we jumped to score 0.80383 and position 145:
+Later, we introduced a new Title attribute: Miss, Master, Mr, Mrs. This help us to improve
+our results by 1.435% and our score jumped to 0.80383 and position 145:
 
 <div id="container">
     <img class=center src=images/kaggle4.png />
-Fig 1. Kaggle score 4.
+Kaggle score 4.
 </div>
 
 By adding clustering attribute (based on 7 clusters) we further improved our results by
@@ -196,30 +156,22 @@ half of the percent up to 0.80861 and position 107:
 
 <div id="container">
     <img class=center src=images/kaggle5.png />
-Fig 1. Kaggle score 5.
+Kaggle score 5.
 </div>
 
 ### Part 3
 
-We tried different classifiers, including BFTree, NaiveBayes, RandomForest, SMO,
-Stacking, AdaBoostM1, Voting and J48. Those were used in Weka, while we
-test as well SVM and RandomForest R implementations. We observed the overfiting
+This section describes our attempts to use different classifiers.
+We used: BFTree, NaiveBayes, RandomForest, SMO,
+Stacking, AdaBoostM1, Voting and J48 in Weka as well as
+SVM and RandomForest from R implementations. We observed the over-fitting
 problem with AdaBoostM1 and RandomForest which were able to classify data
-almost 100% on a training set, but had 80% success with 10-fold cross-validation.
+almost 100% on a training set, but only had ~80% success with 10-fold cross-validation.
 We confirmed that empirically by submitting our prediction to kaggle and observed that
 model based on full training set performed poorly with respect to ones based on
-10-fold cross validation. For instance, here is results from AdaBoostM1 classification:
-
-```
-===> run weka.AdaBoostM1.sh
-Correctly Classified Instances         891              100      %
-Kappa statistic                          1
-Correctly Classified Instances         712               79.9102 %
-Kappa statistic                          0.5635
-```
-
-The first numbers show that we're able to successfully prediction all cases using training
-set, while second number (79.9%) show very poor performance during cross-validation.
+10-fold cross validation. For instance, AdaBoostM1 classification had the following:
+100% on a training set with kappa statistics equal to 1, while only had 79% with kappa
+statistics 0.56 using 10-fold cross-validation sample.
 
 Further trials with different attribute settings did not improve our results. Here is our
 three best submissions:
@@ -235,9 +187,7 @@ The current position at leadership board is the following:
     <img class=center src=images/kaggle_current.png />
 </div>
 
-
-## Kaggle models
-
+Our code is available on github [1].
 
 ## References
 
