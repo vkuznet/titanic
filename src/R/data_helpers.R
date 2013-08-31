@@ -135,6 +135,14 @@ assign.sfname <- function(r, sur.fnames) {
     if(length(res)>0) return(1)
     else return(0)
 }
+# helper function to assign survival ticket id
+assign.sticket <- function(r, sur.tickets) {
+    t <- r$T
+    res <- which(sur.tickets==t)
+    if(length(res)>0) return(1)
+    else return(0)
+}
+
 
 
 # helper function to assign cabin id
@@ -497,28 +505,26 @@ write.model <- function(xdf, drops=NULL, keeps=NULL, fname="model") {
 
     # drop requested attributes
     if(!is.null(drops))
-        train.df <- drop(xdf, drops)
+        xdf <- drop(xdf, drops)
     else if(!is.null(keeps))
-        train.df <- keep(xdf, keeps)
+        xdf <- keep(xdf, keeps)
     else 
-        train.df <- xdf
+        xdf <- xdf
+    print(names(xdf))
 
     # write data out for SVM
     f.csv <- sprintf("%s.csv", fname)
     print(sprintf("Write %s", f.csv))
-    write.csv(train.df, file=f.csv)
-    cmd="cat model.csv | sed 's/\"\"/\"id\"/g' > t.csv; mv -f t.csv model.csv"
+    write.csv(xdf, file=f.csv)
+    cmd=sprintf("cat %s | sed 's/\"\"/\"id\"/g' > t.csv; mv -f t.csv %s", f.csv, f.csv)
     system(cmd)
 
     # write data in arff format for Weka
     f.arff <- sprintf("%s.arff", fname)
     print(sprintf("Write %s", f.arff))
-    write.arff(train.df, file=f.arff)
-    cmd="cat model.arff  | sed \"s/Survived numeric/Survived {0,1}/g\" > t.arff; mv -f t.arff model.arff"
+    write.arff(xdf, file=f.arff)
+    cmd=sprintf("cat %s | sed \"s/Survived numeric/Survived {0,1}/g\" > t.arff; mv -f t.arff %s", f.arff, f.arff)
     system(cmd)
-    # write test data in arff format
-    write.arff(test.df, file="test.arff")
-    cmd="cat test.arff  | sed -e \"s/Survived string/Survived {0,1}/g\" -e \"s/'//g\" > t.arff; mv -f t.arff test.arff"
+    cmd=sprintf("cat %s | sed -e \"s/Survived string/Survived {0,1}/g\" -e \"s/'//g\" > t.arff; mv -f t.arff %s", f.arff, f.arff)
     system(cmd)
-
 }
