@@ -16,7 +16,7 @@ In this contest, we ask you to complete the analysis of what sorts of people wer
 
 **Started: 9:13 pm, Friday 28 September 2012 UTC**
 
-**Ends: 12:00 am, Saturday 28 September 2013 UTC (364 total days)**
+**Ends: 12:00 am, Saturday 28 September 2013 UTC**
 
 
 ### Data analysis
